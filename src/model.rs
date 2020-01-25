@@ -19,8 +19,21 @@ macro_rules! id {
 id!(ValueId);
 id!(ItemId);
 
+/// Stores front end data.
+pub struct FrontEnd {
+    /// Name of the element
+    pub name: String,
+    /// Short name of the element
+    pub name_short: Option<String>,
+    /// Description of the element
+    pub description: Option<String>,
+}
+
 /// A value in the character sheet.
 pub struct Value {
+    /// Front end data
+    pub front_end: FrontEnd,
+
     base: i32,
 
     dependencies: Vec<(f32, ValueId)>,
@@ -40,6 +53,9 @@ pub enum Modification {
 /// "Equippable" item. Can be used to represent actual items, learnable skills, traits or other
 /// conditionals.
 pub struct Item {
+    /// Front end data
+    pub front_end: FrontEnd,
+
     modifications: Vec<(ValueId, Modification)>,
 }
 
