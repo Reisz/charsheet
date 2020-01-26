@@ -9,7 +9,7 @@ pub struct Character<'a> {
 
 impl Character<'_> {
     /// Create a new character with a model.
-    pub fn new<'a>(model: &'a Model) -> Character<'a> {
+    pub fn new(model: &'_ Model) -> Character<'_> {
         Character {
             model,
             values: Vec::new(),

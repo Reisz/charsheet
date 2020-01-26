@@ -28,6 +28,7 @@ id!(ValueId);
 id!(ItemId);
 
 /// Contains a set of values and items that can be used together.
+#[derive(Default)]
 pub struct Model {
     pub(crate) values: Vec<Value>,
     pub(crate) items: Vec<Item>,
@@ -39,13 +40,7 @@ pub struct Model {
 impl Model {
     /// Create a new Model.
     pub fn new() -> Self {
-        Self {
-            values: Vec::new(),
-            items: Vec::new(),
-
-            value_ids: HashMap::new(),
-            item_ids: HashMap::new(),
-        }
+        Self::default()
     }
 
     /// Add a new value to the model. Id string can not alias other value ids.
