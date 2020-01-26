@@ -10,9 +10,9 @@ pub struct FrontEnd {
 
 impl FrontEnd {
     /// Create a new set of front end values.
-    pub fn new(name: String) -> Self {
+    pub fn new<S: ToString>(name: S) -> Self {
         FrontEnd {
-            name,
+            name: name.to_string(),
             name_short: None,
             description: None,
         }
