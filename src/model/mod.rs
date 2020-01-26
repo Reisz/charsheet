@@ -67,6 +67,13 @@ impl Model {
         id
     }
 
+    /// Value of `from` will be added to `to` with the given factor.
+    pub fn add_dependency(&mut self, from: ValueId, to: ValueId, factor: f32) {
+        // TODO: prevent cycles
+        self.value_mut(from).dependents.push(to);
+        self.value_mut(to).dependencies.push((factor, from));
+    }
+
     /// Get the ValueId corresponding to an id string.
     pub fn value_id(&self, id: &str) -> ValueId {
         self.value_ids[id]
@@ -79,6 +86,10 @@ impl Model {
 
     pub(crate) fn value(&self, id: ValueId) -> &Value {
         &self.values[id.idx()]
+    }
+
+    pub(crate) fn value_mut(&mut self, id: ValueId) -> &mut Value {
+        &mut self.values[id.idx()]
     }
 
     pub(crate) fn item(&self, id: ItemId) -> &Item {
