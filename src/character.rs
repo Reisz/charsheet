@@ -1,4 +1,4 @@
-use crate::model::*;
+use crate::model::{ItemId, Model, Modification, ValueId};
 
 /// Contains actual values and equipped items.
 pub struct Character<'a> {

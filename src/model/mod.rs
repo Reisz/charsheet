@@ -1,5 +1,13 @@
 //! Allows defining rules for values and items.
 
+mod front_end;
+mod item;
+mod value;
+
+pub use front_end::*;
+pub use item::*;
+pub use value::*;
+
 use std::collections::HashMap;
 
 macro_rules! id {
@@ -18,81 +26,6 @@ macro_rules! id {
 
 id!(ValueId);
 id!(ItemId);
-
-/// Stores front end data.
-pub struct FrontEnd {
-    /// Name of the element
-    pub name: String,
-    /// Short name of the element
-    pub name_short: Option<String>,
-    /// Description of the element
-    pub description: Option<String>,
-}
-
-impl FrontEnd {
-    /// Create a new set of front end values.
-    pub fn new(name: String) -> Self {
-        FrontEnd {
-            name,
-            name_short: None,
-            description: None,
-        }
-    }
-}
-
-/// A value in the character sheet.
-pub struct Value {
-    /// Front end data
-    pub front_end: FrontEnd,
-
-    pub(crate) base: i32,
-
-    pub(crate) dependencies: Vec<(f32, ValueId)>,
-    pub(crate) dependents: Vec<ValueId>,
-}
-
-impl Value {
-    /// Create a new value.
-    pub fn new(front_end: FrontEnd, base: i32) -> Self {
-        Self {
-            front_end,
-            base,
-
-            dependencies: Vec::new(),
-            dependents: Vec::new(),
-        }
-    }
-}
-
-/// Represents all the ways a Value can be modified by an Item.
-pub enum Modification {
-    /// Add to or subtract from a value
-    Add(i32),
-    /// Multiply a value
-    Multiply(f32),
-    /// Change to a predefined value
-    Change(i32),
-}
-
-/// "Equippable" item. Can be used to represent actual items, learnable skills, traits or other
-/// conditionals.
-pub struct Item {
-    /// Front end data
-    pub front_end: FrontEnd,
-
-    pub(crate) modifications: Vec<(ValueId, Modification)>,
-}
-
-impl Item {
-    /// Create a new item.
-    pub fn new(front_end: FrontEnd) -> Self {
-        Self {
-            front_end,
-
-            modifications: Vec::new(),
-        }
-    }
-}
 
 /// Contains a set of values and items that can be used together.
 pub struct Model {
