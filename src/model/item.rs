@@ -1,4 +1,5 @@
 use super::{FrontEnd, ValueId};
+use std::collections::HashMap;
 
 /// Represents all the ways a Value can be modified by an Item.
 pub enum Modification {
@@ -16,7 +17,7 @@ pub struct Item {
     /// Front end data
     pub front_end: FrontEnd,
 
-    pub(crate) modifications: Vec<(ValueId, Modification)>,
+    pub(crate) modifications: HashMap<ValueId, Modification>,
 }
 
 impl Item {
@@ -25,7 +26,7 @@ impl Item {
         Self {
             front_end,
 
-            modifications: Vec::new(),
+            modifications: HashMap::new(),
         }
     }
 }

@@ -13,7 +13,7 @@ use std::collections::HashMap;
 macro_rules! id {
     ($name:ident) => {
         /// Wrapper to prevent mixing ids
-        #[derive(Clone, Copy, PartialEq)]
+        #[derive(Clone, Copy, PartialEq, Eq, Hash)]
         pub struct $name(u32);
 
         impl $name {
@@ -75,5 +75,13 @@ impl Model {
     /// Get the ItemId corresponding to an id string.
     pub fn item_id(&self, id: &str) -> ItemId {
         self.item_ids[id]
+    }
+
+    pub(crate) fn value(&self, id: ValueId) -> &Value {
+        &self.values[id.idx()]
+    }
+
+    pub(crate) fn item(&self, id: ItemId) -> &Item {
+        &self.items[id.idx()]
     }
 }
