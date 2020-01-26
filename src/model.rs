@@ -29,6 +29,17 @@ pub struct FrontEnd {
     pub description: Option<String>,
 }
 
+impl FrontEnd {
+    /// Create a new set of front end values.
+    pub fn new(name: String) -> Self {
+        FrontEnd {
+            name,
+            name_short: None,
+            description: None,
+        }
+    }
+}
+
 /// A value in the character sheet.
 pub struct Value {
     /// Front end data
@@ -38,6 +49,19 @@ pub struct Value {
 
     pub(crate) dependencies: Vec<(f32, ValueId)>,
     pub(crate) dependents: Vec<ValueId>,
+}
+
+impl Value {
+    /// Create a new value.
+    pub fn new(front_end: FrontEnd, base: i32) -> Self {
+        Self {
+            front_end,
+            base,
+
+            dependencies: Vec::new(),
+            dependents: Vec::new(),
+        }
+    }
 }
 
 /// Represents all the ways a Value can be modified by an Item.
@@ -59,6 +83,17 @@ pub struct Item {
     pub(crate) modifications: Vec<(ValueId, Modification)>,
 }
 
+impl Item {
+    /// Create a new item.
+    pub fn new(front_end: FrontEnd) -> Self {
+        Self {
+            front_end,
+
+            modifications: Vec::new(),
+        }
+    }
+}
+
 /// Contains a set of values and items that can be used together.
 pub struct Model {
     pub(crate) values: Vec<Value>,
@@ -69,6 +104,17 @@ pub struct Model {
 }
 
 impl Model {
+    /// Create a new Model.
+    pub fn new() -> Self {
+        Self {
+            values: Vec::new(),
+            items: Vec::new(),
+
+            value_ids: HashMap::new(),
+            item_ids: HashMap::new(),
+        }
+    }
+
     /// Add a new value to the model. Id string can not alias other value ids.
     pub fn add_value(&mut self, id_str: String, value: Value) -> ValueId {
         let id = ValueId(self.values.len() as u32);

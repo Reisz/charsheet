@@ -8,6 +8,15 @@ pub struct Character<'a> {
 }
 
 impl Character<'_> {
+    /// Create a new character with a model.
+    pub fn new<'a>(model: &'a Model) -> Character<'a> {
+        Character {
+            model,
+            values: Vec::new(),
+            items: Vec::new(),
+        }
+    }
+
     /// Get a value
     pub fn get(&self, id: ValueId) -> i32 {
         self.values[id.idx()]
