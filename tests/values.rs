@@ -50,4 +50,12 @@ fn multiple_dependencies() {
     let initiative = model.add_value("initiative", Value::new(FrontEnd::new("Initiative"), 0));
     model.add_dependency(dexterity, initiative, 1.0);
     model.add_dependency(perception, initiative, 1.0);
+
+    let mut char = Character::new(&model);
+
+    assert_eq!(char.get(initiative), 3);
+    char.set_base(dexterity, 0);
+    assert_eq!(char.get(initiative), 1);
+    char.set_base(perception, 2);
+    assert_eq!(char.get(initiative), 2);
 }
