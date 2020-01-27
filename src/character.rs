@@ -1,4 +1,4 @@
-use crate::model::{ItemId, Model, Modification, Value, ValueId};
+use crate::model::{ItemId, Model, Modification, ValueId};
 use std::collections::HashSet;
 
 struct CharacterValue {
