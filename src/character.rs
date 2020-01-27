@@ -1,4 +1,5 @@
-use crate::model::{ItemId, Model, Modification, ValueId};
+use crate::model::{ItemId, Model, Modification, Value, ValueId};
+use std::collections::HashSet;
 
 struct CharacterValue {
     base: i32,
@@ -21,7 +22,7 @@ pub struct Character<'a> {
 impl Character<'_> {
     /// Create a new character with a model.
     pub fn new(model: &'_ Model) -> Character<'_> {
-        Character {
+        let mut result = Character {
             model,
             values: model
                 .values
@@ -29,6 +30,32 @@ impl Character<'_> {
                 .map(|v| CharacterValue::new(v.default))
                 .collect(),
             items: Vec::new(),
+        };
+
+        result.update_all_values();
+        result
+    }
+
+    fn update_all_values(&mut self) {
+        let mut todo: Vec<_> = self.model.values().collect();
+        let mut done = HashSet::new();
+
+        while let Some((id, value)) = todo.pop() {
+            let ok = if value.dependencies.is_empty() {
+                true
+            } else if value.dependencies.iter().all(|dep| done.contains(&dep.1)) {
+                self.apply_dependencies(id);
+                true
+            } else {
+                false
+            };
+
+            if ok {
+                done.insert(id);
+                for dependent in &value.dependents {
+                    todo.push((*dependent, self.model.value(*dependent)));
+                }
+            }
         }
     }
 
@@ -67,7 +94,7 @@ impl Character<'_> {
         }
     }
 
-    fn update_value(&mut self, id: ValueId) {
+    fn apply_dependencies(&mut self, id: ValueId) {
         let mut actual = self.value(id).base;
 
         for (factor, dependency) in &self.model.value(id).dependencies {
@@ -75,6 +102,10 @@ impl Character<'_> {
         }
 
         self.value_mut(id).actual = actual;
+    }
+
+    fn update_value(&mut self, id: ValueId) {
+        self.apply_dependencies(id);
         self.apply_modifications(id);
 
         for dependent in &self.model.value(id).dependents {

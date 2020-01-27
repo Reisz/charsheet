@@ -92,6 +92,13 @@ impl Model {
         &mut self.values[id.idx()]
     }
 
+    pub(crate) fn values(&self) -> impl std::iter::Iterator<Item = (ValueId, &Value)> {
+        self.values
+            .iter()
+            .enumerate()
+            .map(|(id, val)| (ValueId(id as u32), val))
+    }
+
     pub(crate) fn item(&self, id: ItemId) -> &Item {
         &self.items[id.idx()]
     }
