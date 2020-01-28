@@ -1,4 +1,6 @@
-use crate::model::{ItemId, Model, Modification, ValueId};
+use crate::model::{
+    Condition, ConditionInput, ConditionOperator, ItemId, Model, Modification, ValueId,
+};
 use std::collections::HashSet;
 
 struct CharacterValue {
@@ -70,6 +72,10 @@ impl Character<'_> {
         self.items[id.idx()]
     }
 
+    fn item_mut(&mut self, id: ItemId) -> &mut u16 {
+        &mut self.items[id.idx()]
+    }
+
     /// Get a value
     pub fn get(&self, id: ValueId) -> i32 {
         self.value(id).actual
@@ -115,6 +121,10 @@ impl Character<'_> {
             self.update_value(*dependent);
         }
 
+        for condition in &self.model.value(id).conditions {
+            self.update_condition(*condition);
+        }
+
         // TODO: update observers
         // NOTE: group values, only make groups observable
     }
@@ -145,5 +155,39 @@ impl Character<'_> {
             };
         }
         self.value_mut(id).actual = value;
+    }
+
+    fn update_condition(&mut self, id: ItemId) {
+        *self.item_mut(id) = if let Some(Condition { a, op, b }) = &self.model.item(id).condition {
+            if let [a, b] = &[a, b]
+                .iter()
+                .map(|element| match element {
+                    ConditionInput::Const(v) => *v,
+                    ConditionInput::Value(factor, id) => (self.get(*id) as f32 * factor) as i32,
+                })
+                .collect::<Vec<_>>()[..]
+            {
+                if match op {
+                    ConditionOperator::Eq => a == b,
+                    ConditionOperator::Ne => a != b,
+                    ConditionOperator::Le => a <= b,
+                    ConditionOperator::Lt => a < b,
+                    ConditionOperator::Ge => a >= b,
+                    ConditionOperator::Gt => a > b,
+                } {
+                    1
+                } else {
+                    0
+                }
+            } else {
+                unreachable!();
+            }
+        } else {
+            unreachable!();
+        };
+
+        for value in self.model.item(id).modifications.keys() {
+            self.update_value(*value);
+        }
     }
 }

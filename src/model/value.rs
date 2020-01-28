@@ -10,6 +10,7 @@ pub struct Value {
     pub(crate) dependencies: Vec<(f32, ValueId)>,
     pub(crate) modifying_items: Vec<ItemId>,
     pub(crate) dependents: Vec<ValueId>,
+    pub(crate) conditions: Vec<ItemId>,
 }
 
 impl Value {
@@ -22,6 +23,7 @@ impl Value {
             dependencies: Vec::new(),
             modifying_items: Vec::new(),
             dependents: Vec::new(),
+            conditions: Vec::new(),
         }
     }
 }

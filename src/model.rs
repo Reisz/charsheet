@@ -63,6 +63,17 @@ impl Model {
         assert!(self.item_ids.get(&id_str).is_none());
         self.item_ids.insert(id_str, id);
 
+        match &item.condition {
+            Some(Condition { a, b, .. }) => {
+                for element in &[a, b] {
+                    if let ConditionInput::Value(_, value) = element {
+                        self.value_mut(*value).conditions.push(id);
+                    }
+                }
+            }
+            None => {}
+        }
+
         self.items.push(item);
         id
     }
