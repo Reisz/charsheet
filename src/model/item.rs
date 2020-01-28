@@ -43,8 +43,12 @@ pub struct Condition {
 }
 
 impl Condition {
-    /// Create a new condition.
+    /// Create a new condition. The condition must use at least one non-Const input.
     pub fn new(a: ConditionInput, op: ConditionOperator, b: ConditionInput) -> Self {
+        assert!(match (&a, &b) {
+            (ConditionInput::Const(_), ConditionInput::Const(_)) => false,
+            _ => true
+        });
         Self { a, op, b }
     }
 }
