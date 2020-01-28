@@ -47,7 +47,7 @@ impl Condition {
     pub fn new(a: ConditionInput, op: ConditionOperator, b: ConditionInput) -> Self {
         assert!(match (&a, &b) {
             (ConditionInput::Const(_), ConditionInput::Const(_)) => false,
-            _ => true
+            _ => true,
         });
         Self { a, op, b }
     }
