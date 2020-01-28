@@ -66,6 +66,10 @@ impl Character<'_> {
         &mut self.values[id.idx()]
     }
 
+    fn item(&self, id: ItemId) -> u16 {
+        self.items[id.idx()]
+    }
+
     /// Get a value
     pub fn get(&self, id: ValueId) -> i32 {
         self.value(id).actual
@@ -121,7 +125,13 @@ impl Character<'_> {
             .value(id)
             .modifying_items
             .iter()
-            .map(|item| &self.model.item(*item).modifications[&id])
+            .filter_map(|item| {
+                if self.item(*item) > 0 {
+                    Some(&self.model.item(*item).modifications[&id])
+                } else {
+                    None
+                }
+            })
             .collect();
 
         // TODO: determine sorting
