@@ -44,7 +44,7 @@ impl Model {
     }
 
     /// Add a new value to the model. Id string can not alias other value ids.
-    pub fn add_value<S: ToString>(&mut self, id_str: S, value: Value) -> ValueId {
+    pub fn add_value(&mut self, id_str: impl ToString, value: Value) -> ValueId {
         let id = ValueId(self.values.len() as u32);
 
         let id_str = id_str.to_string();
@@ -56,7 +56,7 @@ impl Model {
     }
 
     /// Add a new item to the model. Id string can not alias other item ids.
-    pub fn add_item<S: ToString>(&mut self, id_str: S, item: Item) -> ItemId {
+    pub fn add_item(&mut self, id_str: impl ToString, item: Item) -> ItemId {
         let id = ItemId(self.items.len() as u32);
 
         let id_str = id_str.to_string();
