@@ -30,8 +30,8 @@ id!(ItemId);
 /// Contains a set of values and items that can be used together.
 #[derive(Default)]
 pub struct Model {
-    pub(crate) values: Vec<Value>,
-    pub(crate) items: Vec<Item>,
+    values: Vec<Value>,
+    items: Vec<Item>,
 
     value_ids: HashMap<String, ValueId>,
     item_ids: HashMap<String, ItemId>,
@@ -74,6 +74,13 @@ impl Model {
         self.value_mut(to).dependencies.push((factor, from));
     }
 
+    /// When item `from` is equipped, `to` will be modified accordingly.
+    pub fn add_modification(&mut self, from: ItemId, to: ValueId, modification: Modification) {
+        // TODO: prevent cycles
+        self.item_mut(from).modifications.insert(to, modification);
+        self.value_mut(to).modifying_items.push(from);
+    }
+
     /// Get the ValueId corresponding to an id string.
     pub fn value_id(&self, id: &str) -> ValueId {
         self.value_ids[id]
@@ -101,5 +108,16 @@ impl Model {
 
     pub(crate) fn item(&self, id: ItemId) -> &Item {
         &self.items[id.idx()]
+    }
+
+    pub(crate) fn item_mut(&mut self, id: ItemId) -> &mut Item {
+        &mut self.items[id.idx()]
+    }
+
+    pub(crate) fn items(&self) -> impl std::iter::Iterator<Item = (ItemId, &Item)> {
+        self.items
+            .iter()
+            .enumerate()
+            .map(|(id, val)| (ItemId(id as u32), val))
     }
 }

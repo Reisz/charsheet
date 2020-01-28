@@ -25,11 +25,10 @@ impl Character<'_> {
         let mut result = Character {
             model,
             values: model
-                .values
-                .iter()
-                .map(|v| CharacterValue::new(v.default))
+                .values()
+                .map(|(_, v)| CharacterValue::new(v.default))
                 .collect(),
-            items: Vec::new(),
+            items: model.items().map(|_| 0).collect(),
         };
 
         result.update_all_values();
