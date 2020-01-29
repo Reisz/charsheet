@@ -3,6 +3,7 @@ on: [push, pull_request]
 name: Continuous integration
 
 jobs:
+  if: "!contains(github.event.head_commit.message, '[ci skip]')"
   check:
     name: Check
     runs-on: ubuntu-latest
