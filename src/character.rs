@@ -1,6 +1,4 @@
-use crate::model::{
-    Condition, ConditionInput, ConditionOperator, ItemId, Model, Modification, ValueId,
-};
+use crate::model::{ItemId, Model, Modification, ValueId};
 use std::collections::HashSet;
 
 struct CharacterValue {
@@ -158,30 +156,8 @@ impl Character<'_> {
     }
 
     fn update_condition(&mut self, id: ItemId) {
-        *self.item_mut(id) = if let Some(Condition { a, op, b }) = &self.model.item(id).condition {
-            if let [a, b] = &[a, b]
-                .iter()
-                .map(|element| match element {
-                    ConditionInput::Const(v) => *v,
-                    ConditionInput::Value(factor, id) => (self.get(*id) as f32 * factor) as i32,
-                })
-                .collect::<Vec<_>>()[..]
-            {
-                if match op {
-                    ConditionOperator::Eq => a == b,
-                    ConditionOperator::Ne => a != b,
-                    ConditionOperator::Le => a <= b,
-                    ConditionOperator::Lt => a < b,
-                    ConditionOperator::Ge => a >= b,
-                    ConditionOperator::Gt => a > b,
-                } {
-                    1
-                } else {
-                    0
-                }
-            } else {
-                unreachable!();
-            }
+        *self.item_mut(id) = if let Some(calc) = &self.model.item(id).condition {
+            calc.get(&calc.values().map(|id| self.get(id)).collect::<Vec<_>>()) as u16
         } else {
             unreachable!();
         };

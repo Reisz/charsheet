@@ -25,31 +25,7 @@ fn character_points() {
     model.add_dependency(max_strength, max_strength_helper, 1.0);
     model.add_dependency(one, max_strength_helper, -1.0);
 
-    let point_malus1 = model.add_item(
-        "point_malus1",
-        Item::with_condition(
-            FrontEnd::new(""),
-            Condition::new(
-                ConditionInput::Value(1.0, max_strength_helper),
-                ConditionOperator::Le,
-                ConditionInput::Value(1.0, strength),
-            ),
-        ),
-    );
-    model.add_modification(point_malus1, character_points, Modification::Add(-1));
-
-    let point_malus2 = model.add_item(
-        "point_malus2",
-        Item::with_condition(
-            FrontEnd::new(""),
-            Condition::new(
-                ConditionInput::Value(1.0, max_strength_helper),
-                ConditionOperator::Lt,
-                ConditionInput::Value(1.0, strength),
-            ),
-        ),
-    );
-    model.add_modification(point_malus2, character_points, Modification::Add(-1));
+    
 
     model.add_dependency(strength, character_points, -1.0);
     model.add_dependency(min_strength, character_points, 1.0);

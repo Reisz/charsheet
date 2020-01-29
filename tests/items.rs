@@ -1,5 +1,5 @@
 use charsheet::model::{
-    Condition, ConditionInput, ConditionOperator, FrontEnd, Item, Model, Modification, Value,
+    Calculation, FrontEnd, Item, Model, Modification, Value,
 };
 use charsheet::Character;
 
@@ -32,11 +32,11 @@ fn conditional_item() {
         "overburdened",
         Item::with_condition(
             FrontEnd::new("Overburdened"),
-            Condition::new(
-                ConditionInput::Value(1.0, burden),
-                ConditionOperator::Gt,
-                ConditionInput::Value(1.0, max_burden),
-            ),
+            {
+                let mut calc = Calculation::new();
+
+                calc
+            }
         ),
     );
     model.add_modification(overburdened, initiative, Modification::Add(-2));

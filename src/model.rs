@@ -1,9 +1,11 @@
 //! Allows defining rules for values and items.
 
+mod calculation;
 mod front_end;
 mod item;
 mod value;
 
+pub use calculation::*;
 pub use front_end::*;
 pub use item::*;
 pub use value::*;
@@ -63,15 +65,10 @@ impl Model {
         assert!(self.item_ids.get(&id_str).is_none());
         self.item_ids.insert(id_str, id);
 
-        match &item.condition {
-            Some(Condition { a, b, .. }) => {
-                for element in &[a, b] {
-                    if let ConditionInput::Value(_, value) = element {
-                        self.value_mut(*value).conditions.push(id);
-                    }
-                }
+        if let Some(calc) = &item.condition {
+            for value in calc.values() {
+                self.value_mut(value).conditions.push(id);
             }
-            None => {}
         }
 
         self.items.push(item);
@@ -110,7 +107,7 @@ impl Model {
         &mut self.values[id.idx()]
     }
 
-    pub(crate) fn values(&self) -> impl std::iter::Iterator<Item = (ValueId, &Value)> {
+    pub(crate) fn values(&self) -> impl Iterator<Item = (ValueId, &Value)> {
         self.values
             .iter()
             .enumerate()
@@ -125,7 +122,7 @@ impl Model {
         &mut self.items[id.idx()]
     }
 
-    pub(crate) fn items(&self) -> impl std::iter::Iterator<Item = (ItemId, &Item)> {
+    pub(crate) fn items(&self) -> impl Iterator<Item = (ItemId, &Item)> {
         self.items
             .iter()
             .enumerate()
