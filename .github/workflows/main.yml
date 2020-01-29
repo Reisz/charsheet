@@ -3,10 +3,10 @@ on: [push, pull_request]
 name: Continuous integration
 
 jobs:
-  if: "!contains(github.event.head_commit.message, '[ci skip]')"
   check:
     name: Check
     runs-on: ubuntu-latest
+    if: "!contains(github.event.head_commit.message, '[ci skip]')"
     steps:
       - uses: actions/checkout@v2
       - uses: actions-rs/toolchain@v1
@@ -21,6 +21,7 @@ jobs:
   test:
     name: Test Suite
     runs-on: ubuntu-latest
+    if: "!contains(github.event.head_commit.message, '[ci skip]')"
     steps:
       - uses: actions/checkout@v2
       - uses: actions-rs/toolchain@v1
@@ -35,6 +36,7 @@ jobs:
   fmt:
     name: Rustfmt
     runs-on: ubuntu-latest
+    if: "!contains(github.event.head_commit.message, '[ci skip]')"
     steps:
       - uses: actions/checkout@v2
       - uses: actions-rs/toolchain@v1
@@ -51,6 +53,7 @@ jobs:
   clippy:
     name: Clippy
     runs-on: ubuntu-latest
+    if: "!contains(github.event.head_commit.message, '[ci skip]')"
     steps:
       - uses: actions/checkout@v2
       - uses: actions-rs/toolchain@v1
