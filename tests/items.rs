@@ -1,6 +1,4 @@
-use charsheet::model::{
-    Calculation, FrontEnd, Item, Model, Modification, Value,
-};
+use charsheet::model::{Calculation, FrontEnd, Item, Model, Modification, Value};
 use charsheet::Character;
 
 #[test]
@@ -30,14 +28,17 @@ fn conditional_item() {
 
     let overburdened = model.add_item(
         "overburdened",
-        Item::with_condition(
-            FrontEnd::new("Overburdened"),
-            {
-                let mut calc = Calculation::new();
+        Item::with_condition(FrontEnd::new("Overburdened"), {
+            let mut calc = Calculation::new();
 
-                calc
-            }
-        ),
+            let v1 = calc.value(burden);
+            let v2 = calc.value(max_burden);
+
+            let gt = calc.greater(v1, v2);
+            calc.set_output(gt);
+
+            calc
+        }),
     );
     model.add_modification(overburdened, initiative, Modification::Add(-2));
 

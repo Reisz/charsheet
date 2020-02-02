@@ -1,6 +1,8 @@
-
 use super::ValueId;
-use std::fmt::{self, Display, Formatter};
+use std::{
+    cmp::{max, min},
+    fmt::{self, Display, Formatter},
+};
 
 enum Element {
     Const(i32),
@@ -9,6 +11,9 @@ enum Element {
     Add(u32, u32),
     Multiply(u32, u32),
     MultiplyF(u32, f32),
+
+    Min(u32, u32),
+    Max(u32, u32),
 
     Equals(u32, u32),
     GreaterThan(u32, u32),
@@ -93,37 +98,198 @@ impl Calculation {
     }
 
     /// Multiply two elements.
+    ///
+    /// # Examples
+    ///
+    /// Basic usage:
+    ///
+    /// ```
+    /// use charsheet::model::Calculation;
+    ///
+    /// let mut calc = Calculation::new();
+    /// let c1 = calc.constant(2);
+    /// let c2 = calc.constant(3);
+    ///
+    /// let mul = calc.multiply(c1, c2);
+    ///
+    /// calc.set_output(mul);
+    /// assert_eq!(format!("{}", calc), "(2 * 3)");
+    /// ```
     pub fn multiply(&mut self, a: u32, b: u32) -> u32 {
         self.insert(Element::Multiply(a, b))
     }
 
     /// Multiply an element with a constant float.
+    ///
+    /// # Examples
+    ///
+    /// Basic usage:
+    ///
+    /// ```
+    /// use charsheet::model::Calculation;
+    ///
+    /// let mut calc = Calculation::new();
+    /// let c = calc.constant(2);
+    ///
+    /// let mulf = calc.multiply_float(c, 0.5);
+    ///
+    /// calc.set_output(mulf);
+    /// assert_eq!(format!("{}", calc), "(0.5 * 2)");
+    /// ```
     pub fn multiply_float(&mut self, val: u32, f: f32) -> u32 {
         self.insert(Element::MultiplyF(val, f))
     }
 
     /// Evaluate to 1 if `a == b` else 0.
+    ///
+    /// # Examples
+    ///
+    /// Basic usage:
+    ///
+    /// ```
+    /// use charsheet::model::Calculation;
+    ///
+    /// let mut calc = Calculation::new();
+    /// let c1 = calc.constant(2);
+    /// let c2 = calc.constant(3);
+    ///
+    /// let eq = calc.min(c1, c2);
+    ///
+    /// calc.set_output(eq);
+    /// assert_eq!(format!("{}", calc), "min(2, 3)");
+    /// ```
+    pub fn min(&mut self, a: u32, b: u32) -> u32 {
+        self.insert(Element::Min(a, b))
+    }
+
+    /// Evaluate to 1 if `a == b` else 0.
+    ///
+    /// # Examples
+    ///
+    /// Basic usage:
+    ///
+    /// ```
+    /// use charsheet::model::Calculation;
+    ///
+    /// let mut calc = Calculation::new();
+    /// let c1 = calc.constant(2);
+    /// let c2 = calc.constant(3);
+    ///
+    /// let eq = calc.max(c1, c2);
+    ///
+    /// calc.set_output(eq);
+    /// assert_eq!(format!("{}", calc), "max(2, 3)");
+    /// ```
+    pub fn max(&mut self, a: u32, b: u32) -> u32 {
+        self.insert(Element::Max(a, b))
+    }
+
+    /// Evaluate to 1 if `a == b` else 0.
+    ///
+    /// # Examples
+    ///
+    /// Basic usage:
+    ///
+    /// ```
+    /// use charsheet::model::Calculation;
+    ///
+    /// let mut calc = Calculation::new();
+    /// let c1 = calc.constant(2);
+    /// let c2 = calc.constant(3);
+    ///
+    /// let eq = calc.equals(c1, c2);
+    ///
+    /// calc.set_output(eq);
+    /// assert_eq!(format!("{}", calc), "(2 == 3)");
+    /// ```
     pub fn equals(&mut self, a: u32, b: u32) -> u32 {
         self.insert(Element::Equals(a, b))
     }
 
     /// Evaluate to 1 if `a > b` else 0.
-    pub fn greater(&mut self, a: u32, b:u32) -> u32 {
+    ///
+    /// # Examples
+    ///
+    /// Basic usage:
+    ///
+    /// ```
+    /// use charsheet::model::Calculation;
+    ///
+    /// let mut calc = Calculation::new();
+    /// let c1 = calc.constant(2);
+    /// let c2 = calc.constant(3);
+    ///
+    /// let gt = calc.greater(c1, c2);
+    ///
+    /// calc.set_output(gt);
+    /// assert_eq!(format!("{}", calc), "(2 > 3)");
+    /// ```
+    pub fn greater(&mut self, a: u32, b: u32) -> u32 {
         self.insert(Element::GreaterThan(a, b))
     }
 
     /// Evaluate to 1 if `val == 0` else 0.
+    ///
+    /// # Examples
+    ///
+    /// Basic usage:
+    ///
+    /// ```
+    /// use charsheet::model::Calculation;
+    ///
+    /// let mut calc = Calculation::new();
+    /// let c = calc.constant(2);
+    ///
+    /// let not = calc.not(c);
+    ///
+    /// calc.set_output(not);
+    /// assert_eq!(format!("{}", calc), "!2");
+    /// ```
     pub fn not(&mut self, val: u32) -> u32 {
         self.insert(Element::Not(val))
     }
 
     /// Evaluate to 1 if `a != 0 && b != 0` else 0.
-    pub fn and(&mut self, a: u32, b:u32) -> u32 {
+    ///
+    /// # Examples
+    ///
+    /// Basic usage:
+    ///
+    /// ```
+    /// use charsheet::model::Calculation;
+    ///
+    /// let mut calc = Calculation::new();
+    /// let c1 = calc.constant(2);
+    /// let c2 = calc.constant(3);
+    ///
+    /// let and = calc.and(c1, c2);
+    ///
+    /// calc.set_output(and);
+    /// assert_eq!(format!("{}", calc), "(2 && 3)");
+    /// ```
+    pub fn and(&mut self, a: u32, b: u32) -> u32 {
         self.insert(Element::And(a, b))
     }
 
     /// Evaluate to 1 if `a != 0 || b != 0` else 0.
-    pub fn or(&mut self, a: u32, b:u32) -> u32 {
+    ///
+    /// # Examples
+    ///
+    /// Basic usage:
+    ///
+    /// ```
+    /// use charsheet::model::Calculation;
+    ///
+    /// let mut calc = Calculation::new();
+    /// let c1 = calc.constant(2);
+    /// let c2 = calc.constant(3);
+    ///
+    /// let or = calc.or(c1, c2);
+    ///
+    /// calc.set_output(or);
+    /// assert_eq!(format!("{}", calc), "(2 || 3)");
+    /// ```
+    pub fn or(&mut self, a: u32, b: u32) -> u32 {
         self.insert(Element::Or(a, b))
     }
 
@@ -156,6 +322,9 @@ impl Calculation {
             Element::Multiply(a, b) => eval(a) * eval(b),
             Element::MultiplyF(a, f) => (eval(a) as f32 * f) as i32,
 
+            Element::Min(a, b) => min(eval(a), eval(b)),
+            Element::Max(a, b) => max(eval(a), eval(b)),
+
             Element::Equals(a, b) => (eval(a) == eval(b)) as i32,
             Element::GreaterThan(a, b) => (eval(a) > eval(b)) as i32,
             Element::Not(val) => (eval(val) == 0) as i32,
@@ -180,17 +349,32 @@ impl Calculation {
             Element::Add(a, b) => op(a, " + ", b),
             Element::Multiply(a, b) => op(a, " * ", b),
             Element::MultiplyF(val, fac) => {
-                write!(f, "({} *", fac)?;
+                write!(f, "({} * ", fac)?;
                 self.write(f, val)?;
                 f.write_str(")")
-            },
+            }
+
+            Element::Min(a, b) => {
+                f.write_str("min(")?;
+                self.write(f, a)?;
+                f.write_str(", ")?;
+                self.write(f, b)?;
+                f.write_str(")")
+            }
+            Element::Max(a, b) => {
+                f.write_str("max(")?;
+                self.write(f, a)?;
+                f.write_str(", ")?;
+                self.write(f, b)?;
+                f.write_str(")")
+            }
 
             Element::Equals(a, b) => op(a, " == ", b),
             Element::GreaterThan(a, b) => op(a, " > ", b),
             Element::Not(val) => {
                 f.write_str("!")?;
                 self.write(f, val)
-            },
+            }
             Element::And(a, b) => op(a, " && ", b),
             Element::Or(a, b) => op(a, " || ", b),
         }
@@ -205,47 +389,4 @@ impl Display for Calculation {
             Ok(())
         }
     }
-}
-
-#[cfg(test)]
-mod test {
-    use super::*;
-
-    #[test]
-    fn no_element() {
-        let calc = Calculation::new();
-        assert_eq!(calc.get(&vec![]), 0);
-    }
-
-    #[test]
-    fn addition() {
-        let mut calc = Calculation::new();
-        let a = calc.constant(2);
-        let b = calc.constant(3);
-        let add = calc.add(a, b);
-        calc.set_output(add);
-        assert_eq!(calc.get(&vec![]), 5);
-    }
-
-    #[test]
-    fn multiply() {
-        let mut calc = Calculation::new();
-        let a = calc.constant(2);
-        let b = calc.constant(3);
-        let mul = calc.multiply(a, b);
-        calc.set_output(mul);
-        assert_eq!(calc.get(&vec![]), 6);
-    }
-
-    #[test]
-    fn multiply_float() {
-        let mut calc = Calculation::new();
-        let val = calc.constant(12);
-        let mul = calc.multiply_float(val, 0.5);
-        calc.set_output(mul);
-        assert_eq!(calc.get(&vec![]), 6);
-    }
-
-    #[test]
-    fn equals() {}
 }
