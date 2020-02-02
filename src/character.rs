@@ -42,7 +42,13 @@ impl Character<'_> {
         while let Some((id, value)) = todo.pop() {
             let ok = if value.dependencies.is_empty() {
                 true
-            } else if value.dependencies.iter().all(|dep| done.contains(&dep.1)) {
+            } else if value
+                .dependencies
+                .iter()
+                .map(|dep| dep.values())
+                .flatten()
+                .all(|dep| done.contains(&dep))
+            {
                 self.apply_dependencies(id);
                 true
             } else {
@@ -104,8 +110,8 @@ impl Character<'_> {
     fn apply_dependencies(&mut self, id: ValueId) {
         let mut actual = self.value(id).base;
 
-        for (factor, dependency) in &self.model.value(id).dependencies {
-            actual += (factor * self.get(*dependency) as f32) as i32;
+        for calc in &self.model.value(id).dependencies {
+            actual += calc.get(&calc.values().map(|id| self.get(id)).collect::<Vec<_>>());
         }
 
         self.value_mut(id).actual = actual;

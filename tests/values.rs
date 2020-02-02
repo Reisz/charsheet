@@ -1,4 +1,4 @@
-use charsheet::model::{FrontEnd, Model, Value};
+use charsheet::model::{Calculation, FrontEnd, Model, Value};
 use charsheet::Character;
 
 #[test]
@@ -32,7 +32,16 @@ fn dependent_value() {
         "max_burden",
         Value::new(FrontEnd::new("Carrying capacity"), 20),
     );
-    model.add_dependency(strength, max_burden, 10.0);
+    model.add_dependency(max_burden, {
+        let mut calc = Calculation::new();
+
+        let c = calc.constant(10);
+        let val = calc.value(strength);
+        let mul = calc.multiply(c, val);
+
+        calc.set_output(mul);
+        calc
+    });
 
     let mut char = Character::new(&model);
 
@@ -48,8 +57,16 @@ fn multiple_dependencies() {
     let perception = model.add_value("perception", Value::new(FrontEnd::new("Perception"), 1));
 
     let initiative = model.add_value("initiative", Value::new(FrontEnd::new("Initiative"), 0));
-    model.add_dependency(dexterity, initiative, 1.0);
-    model.add_dependency(perception, initiative, 1.0);
+    model.add_dependency(initiative, {
+        let mut calc = Calculation::new();
+
+        let a = calc.value(perception);
+        let b = calc.value(dexterity);
+        let add = calc.add(a, b);
+
+        calc.set_output(add);
+        calc
+    });
 
     let mut char = Character::new(&model);
 

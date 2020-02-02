@@ -76,10 +76,13 @@ impl Model {
     }
 
     /// Value of `from` will be added to `to` with the given factor.
-    pub fn add_dependency(&mut self, from: ValueId, to: ValueId, factor: f32) {
+    pub fn add_dependency(&mut self, id: ValueId, calc: Calculation) {
         // TODO: prevent cycles
-        self.value_mut(from).dependents.push(to);
-        self.value_mut(to).dependencies.push((factor, from));
+        for dependency in calc.values() {
+            self.value_mut(dependency).dependents.push(id);
+        }
+
+        self.value_mut(id).dependencies.push(calc);
     }
 
     /// When item `from` is equipped, `to` will be modified accordingly.
