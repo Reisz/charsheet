@@ -9,6 +9,7 @@ enum Element {
     Value(usize),
 
     Add(u32, u32),
+    Sub(u32, u32),
     Multiply(u32, u32),
     MultiplyF(u32, f32),
 
@@ -97,6 +98,28 @@ impl Calculation {
         self.insert(Element::Add(a, b))
     }
 
+    /// Subtract two elements.
+    ///
+    /// # Examples
+    ///
+    /// Basic usage:
+    ///
+    /// ```
+    /// use charsheet::model::Calculation;
+    ///
+    /// let mut calc = Calculation::new();
+    /// let c1 = calc.constant(2);
+    /// let c2 = calc.constant(3);
+    ///
+    /// let add = calc.sub(c1, c2);
+    ///
+    /// calc.set_output(add);
+    /// assert_eq!(format!("{}", calc), "(2 - 3)");
+    /// ```
+    pub fn sub(&mut self, a: u32, b: u32) -> u32 {
+        self.insert(Element::Sub(a, b))
+    }
+
     /// Multiply two elements.
     ///
     /// # Examples
@@ -140,7 +163,7 @@ impl Calculation {
         self.insert(Element::MultiplyF(val, f))
     }
 
-    /// Evaluate to 1 if `a == b` else 0.
+    /// Evaluate to the smaller value between a and b.
     ///
     /// # Examples
     ///
@@ -162,7 +185,7 @@ impl Calculation {
         self.insert(Element::Min(a, b))
     }
 
-    /// Evaluate to 1 if `a == b` else 0.
+    /// Evaluate to the bigger value between a and b.
     ///
     /// # Examples
     ///
@@ -319,6 +342,7 @@ impl Calculation {
             Element::Value(idx) => values[idx],
 
             Element::Add(a, b) => eval(a) + eval(b),
+            Element::Sub(a, b) => eval(a) - eval(b),
             Element::Multiply(a, b) => eval(a) * eval(b),
             Element::MultiplyF(a, f) => (eval(a) as f32 * f) as i32,
 
@@ -347,6 +371,7 @@ impl Calculation {
             Element::Value(_) => write!(f, "?"),
 
             Element::Add(a, b) => op(a, " + ", b),
+            Element::Sub(a, b) => op(a, " - ", b),
             Element::Multiply(a, b) => op(a, " * ", b),
             Element::MultiplyF(val, fac) => {
                 write!(f, "({} * ", fac)?;
