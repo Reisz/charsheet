@@ -4,77 +4,81 @@ use std::{
     fmt::{self, Display, Formatter},
 };
 
+enum BinaryOp {
+    Add,
+    Sub,
+    Mul,
+    Min,
+    Max,
+    Equals,
+    GreaterThan,
+    And,
+    Or,
+}
+
+enum UnaryOp {
+    Neg,
+    Not,
+}
+
 enum Element {
     Const(i32),
     Value(usize),
+    MultiplyF(f32, usize),
 
-    Add(u32, u32),
-    Sub(u32, u32),
-    Multiply(u32, u32),
-    MultiplyF(u32, f32),
-
-    Min(u32, u32),
-    Max(u32, u32),
-
-    Equals(u32, u32),
-    GreaterThan(u32, u32),
-    Not(u32),
-    And(u32, u32),
-    Or(u32, u32),
+    Unary(UnaryOp, usize),
+    Binary(BinaryOp, usize, usize),
 }
 
 /// Represents a calculation based on values of a character.
-#[derive(Default)]
 pub struct Calculation {
     storage: Vec<Element>,
     values: Vec<ValueId>,
 
-    output: Option<u32>,
+    output: usize,
 }
 
 impl Calculation {
-    /// Get a new empty calculation.
-    pub fn new() -> Self {
-        Self::default()
+    /// Create a new calculation based on a character value.
+    pub fn new(id: ValueId) -> Self {
+        Self {
+            storage: vec![Element::Value(0)],
+            values: vec![id],
+
+            output: 0,
+        }
     }
 
-    fn insert(&mut self, element: Element) -> u32 {
-        let idx = self.storage.len() as u32;
+    fn insert(&mut self, element: Element) {
+        let idx = self.storage.len();
         self.storage.push(element);
-        idx
+        self.output = idx;
     }
 
-    /// Use a constant value.
-    ///
-    /// # Examples
-    ///
-    /// Basic usage:
-    ///
-    /// ```
-    /// use charsheet::model::Calculation;
-    ///
-    /// let mut calc = Calculation::new();
-    /// let c = calc.constant(5);
-    /// calc.set_output(c);
-    /// assert_eq!(format!("{}", calc), "5");
-    /// ```
-    pub fn constant(&mut self, c: i32) -> u32 {
-        self.insert(Element::Const(c))
+    fn append(&mut self, other: Calculation) {
+        let offset = self.storage.len();
+        self.storage
+            .extend(other.storage.into_iter().map(|element| match element {
+                Element::Const(c) => Element::Const(c),
+                Element::Value(_) => todo!(),
+                Element::MultiplyF(fac, val) => Element::MultiplyF(fac, val + offset),
+                Element::Unary(op, val) => Element::Unary(op, val),
+                Element::Binary(op, a, b) => Element::Binary(op, a + offset, b + offset),
+            }))
     }
 
-    /// Read a value from the character.
-    pub fn value(&mut self, id: ValueId) -> u32 {
-        let element = Element::Value(
-            if let Some(idx) = self.values.iter().position(|&other_id| other_id == id) {
-                idx
-            } else {
-                let idx = self.values.len();
-                self.values.push(id);
-                idx
-            },
-        );
-        self.insert(element)
-    }
+    // Read a value from the character.
+    // pub fn value(&mut self, id: ValueId) -> u32 {
+    //     let element = Element::Value(
+    //         if let Some(idx) = self.values.iter().position(|&other_id| other_id == id) {
+    //             idx
+    //         } else {
+    //             let idx = self.values.len();
+    //             self.values.push(id);
+    //             idx
+    //         },
+    //     );
+    // }
 
     /// Add two elements.
     ///
