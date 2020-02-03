@@ -28,17 +28,10 @@ fn conditional_item() {
 
     let overburdened = model.add_item(
         "overburdened",
-        Item::with_condition(FrontEnd::new("Overburdened"), {
-            let mut calc = Calculation::new();
-
-            let v1 = calc.value(burden);
-            let v2 = calc.value(max_burden);
-
-            let gt = calc.greater(v1, v2);
-            calc.set_output(gt);
-
-            calc
-        }),
+        Item::with_condition(
+            FrontEnd::new("Overburdened"),
+            Calculation::from(burden).gt(max_burden),
+        ),
     );
     model.add_modification(overburdened, initiative, Modification::Add(-2));
 

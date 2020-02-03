@@ -19,27 +19,12 @@ fn character_points() {
         Value::new(FrontEnd::new("Maximum Strength"), 12),
     );
 
-    model.add_dependency(character_points, {
-        let mut calc = Calculation::new();
-
-        let min = calc.value(min_strength);
-        let actual = calc.value(strength);
-        let max = calc.value(max_strength);
-        let out = calc.sub(min, actual);
-
-        let extra = {
-            let threshold = calc.constant(2);
-            let threshold = calc.sub(max, threshold);
-            let threshold = calc.sub(actual, threshold);
-
-            let zero = calc.constant(0);
-            calc.max(zero, threshold)
-        };
-        let out = calc.sub(out, extra);
-
-        calc.set_output(out);
-        calc
-    });
+    model.add_dependency(
+        character_points,
+        Calculation::from(min_strength)
+            - strength
+            - Calculation::from(0).max(strength - max_strength + 2),
+    );
 
     let mut char = Character::new(&model);
 
