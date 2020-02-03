@@ -21,9 +21,7 @@ fn character_points() {
 
     model.add_dependency(
         character_points,
-        Calculation::from(min_strength)
-            - strength
-            - Calculation::from(0).max(strength - max_strength + 2),
+        min_strength - strength - Calculation::max(0.into(), strength - max_strength + 2),
     );
 
     let mut char = Character::new(&model);

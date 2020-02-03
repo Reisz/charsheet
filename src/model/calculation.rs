@@ -249,11 +249,35 @@ macro_rules! binary {
             }
         }
 
-        impl $trait<ValueId> for ValueId {
+        impl $trait for ValueId {
             type Output = Calculation;
 
             fn $fn(self, id: ValueId) -> Calculation {
                 Calculation::from(self).binary(id.into(), $op)
+            }
+        }
+
+        impl $trait<i32> for ValueId {
+            type Output = Calculation;
+
+            fn $fn(self, c: i32) -> Calculation {
+                Calculation::from(self).binary(c.into(), $op)
+            }
+        }
+
+        impl $trait<ValueId> for i32 {
+            type Output = Calculation;
+
+            fn $fn(self, id: ValueId) -> Calculation {
+                Calculation::from(self).binary(id.into(), $op)
+            }
+        }
+
+        impl $trait<Calculation> for i32 {
+            type Output = Calculation;
+
+            fn $fn(self, other: Calculation) -> Calculation {
+                Calculation::from(self).binary(other, $op)
             }
         }
     };
@@ -272,6 +296,14 @@ macro_rules! unary {
 
             fn $fn(self) -> Self {
                 self.unary($op)
+            }
+        }
+
+        impl $trait for ValueId {
+            type Output = Calculation;
+
+            fn $fn(self) -> Calculation {
+                Calculation::from(self).unary($op)
             }
         }
     };

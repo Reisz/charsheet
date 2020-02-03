@@ -30,7 +30,7 @@ fn conditional_item() {
         "overburdened",
         Item::with_condition(
             FrontEnd::new("Overburdened"),
-            Calculation::from(burden).gt(max_burden),
+            Calculation::gt(burden.into(), max_burden),
         ),
     );
     model.add_modification(overburdened, initiative, Modification::Add(-2));

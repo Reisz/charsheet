@@ -1,4 +1,4 @@
-use charsheet::model::{Calculation, FrontEnd, Model, Value};
+use charsheet::model::{FrontEnd, Model, Value};
 use charsheet::Character;
 
 #[test]
@@ -32,7 +32,7 @@ fn dependent_value() {
         "max_burden",
         Value::new(FrontEnd::new("Carrying capacity"), 20),
     );
-    model.add_dependency(max_burden, Calculation::from(10) * strength);
+    model.add_dependency(max_burden, 10 * strength);
 
     let mut char = Character::new(&model);
 
