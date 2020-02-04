@@ -1,3 +1,7 @@
+mod character_item;
+
+use self::character_item::*;
+
 use crate::model::{
     Calculation, Inventory, InventoryId, InventoryInfo, ItemId, Model, Modification, ValueId,
 };
@@ -20,7 +24,7 @@ impl CharacterValue {
 
 struct CharacterInventory {
     inventory: InventoryId,
-    content: Vec<(ItemId, u16)>,
+    content: Vec<(ItemId, CharacterItem)>,
     fill: u32,
 }
 
@@ -34,12 +38,16 @@ impl CharacterInventory {
     }
 }
 
+/// Points to the inventory of an item.
+#[derive(Clone, Copy, Debug, PartialEq, Eq, PartialOrd, Ord, Hash)]
+pub struct ItemInventory(usize);
+
 /// Contains actual values and equipped items.
 pub struct Character<'a> {
     model: &'a Model,
     values: Vec<CharacterValue>,
     inventories: Vec<CharacterInventory>,
-    items: Vec<u16>,
+    items: Vec<CharacterItem>,
 }
 
 impl Character<'_> {
@@ -56,7 +64,10 @@ impl Character<'_> {
                 .into_iter()
                 .map(CharacterInventory::new)
                 .collect(),
-            items: model.items().map(|_| 0).collect(),
+            items: model
+                .items()
+                .map(|(_, item)| CharacterItem::new(item.has_inventory))
+                .collect(),
         };
 
         result.update_all_values();
@@ -100,15 +111,11 @@ impl Character<'_> {
         &mut self.values[id.0]
     }
 
-    fn inventory_idx(&self, item: Option<ItemId>) -> usize {
-        item.map_or(0, |_| todo!())
+    fn item(&self, id: ItemId) -> &CharacterItem {
+        &self.items[id.0]
     }
 
-    fn item(&self, id: ItemId) -> u16 {
-        self.items[id.0]
-    }
-
-    fn item_mut(&mut self, id: ItemId) -> &mut u16 {
+    fn item_mut(&mut self, id: ItemId) -> &mut CharacterItem {
         &mut self.items[id.0]
     }
 
@@ -135,8 +142,10 @@ impl Character<'_> {
     }
 
     /// Store an item into an inventory. Returns the amount that could not fit.
-    pub fn store(&mut self, inventory: Option<ItemId>, item: ItemId, to_put: u16) -> u16 {
-        let inventory = self.inventory_idx(inventory);
+    pub fn store(&mut self, inventory: Option<InventoryId>, item: ItemId, to_put: u16) -> u16 {
+        assert!(self.model.item(item).has_inventory.is_none());
+
+        let inventory = inventory.unwrap_or(InventoryId(0)).0;
 
         // Get item info & check size against current fill
         let InventoryInfo { size, stack_size } =
@@ -160,10 +169,10 @@ impl Character<'_> {
         // Fill up exisitng stacks
         for (id, existing) in &mut self.inventories[inventory].content {
             if *id == item {
-                let space = u16::from(*stack_size) - *existing;
+                let space = u16::from(*stack_size) - existing.count();
                 let usage = min(space, to_put);
 
-                *existing += usage;
+                *existing.count_mut() += usage;
                 to_put -= usage;
             }
         }
@@ -182,7 +191,9 @@ impl Character<'_> {
 
             let usage = min((*stack_size).into(), to_put);
 
-            inventory.content.push((item, usage));
+            inventory
+                .content
+                .push((item, CharacterItem::with_count(usage)));
             to_put -= usage;
         }
 
@@ -195,7 +206,7 @@ impl Character<'_> {
 
     /// Add an item to the character.
     pub fn equip(&mut self, id: ItemId) {
-        self.items[id.0] += 1;
+        *self.items[id.0].count_mut() += 1;
 
         for value in self.model.item(id).modifications.keys() {
             self.update_value(*value);
@@ -235,7 +246,7 @@ impl Character<'_> {
             .modifying_items
             .iter()
             .filter_map(|&item| {
-                let count = self.item(item);
+                let count = self.item(item).count();
 
                 if count > 0 {
                     Some((count, &self.model.item(item).modifications[&id]))
@@ -261,7 +272,7 @@ impl Character<'_> {
     }
 
     fn update_condition(&mut self, id: ItemId) {
-        *self.item_mut(id) = if let Some(calc) = &self.model.item(id).condition {
+        *self.item_mut(id).count_mut() = if let Some(calc) = &self.model.item(id).condition {
             self.eval(calc) as u16
         } else {
             unreachable!();
