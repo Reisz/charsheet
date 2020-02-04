@@ -93,11 +93,11 @@ impl Character<'_> {
     }
 
     fn value(&self, id: ValueId) -> &CharacterValue {
-        &self.values[id.idx()]
+        &self.values[id.0]
     }
 
     fn value_mut(&mut self, id: ValueId) -> &mut CharacterValue {
-        &mut self.values[id.idx()]
+        &mut self.values[id.0]
     }
 
     fn inventory_idx(&self, item: Option<ItemId>) -> usize {
@@ -105,11 +105,11 @@ impl Character<'_> {
     }
 
     fn item(&self, id: ItemId) -> u16 {
-        self.items[id.idx()]
+        self.items[id.0]
     }
 
     fn item_mut(&mut self, id: ItemId) -> &mut u16 {
-        &mut self.items[id.idx()]
+        &mut self.items[id.0]
     }
 
     fn eval(&self, calc: &Calculation) -> i32 {
@@ -195,7 +195,7 @@ impl Character<'_> {
 
     /// Add an item to the character.
     pub fn equip(&mut self, id: ItemId) {
-        self.items[id.idx()] += 1;
+        self.items[id.0] += 1;
 
         for value in self.model.item(id).modifications.keys() {
             self.update_value(*value);

@@ -14,23 +14,17 @@ pub use value::*;
 
 use std::collections::HashMap;
 
-macro_rules! id {
-    ($name:ident) => {
-        /// Wrapper to prevent mixing ids
-        #[derive(Clone, Copy, PartialEq, Eq, Hash)]
-        pub struct $name(u32);
+/// Points to a value in the model.
+#[derive(Clone, Copy, Debug, PartialEq, Eq, PartialOrd, Ord, Hash)]
+pub struct ValueId(pub(crate) usize);
 
-        impl $name {
-            pub(crate) fn idx(self) -> usize {
-                self.0 as usize
-            }
-        }
-    };
-}
+/// Points to an inventory in the model.
+#[derive(Clone, Copy, Debug, PartialEq, Eq, PartialOrd, Ord, Hash)]
+pub struct InventoryId(pub(crate) usize);
 
-id!(ValueId);
-id!(InventoryId);
-id!(ItemId);
+/// Points to an item in the model.
+#[derive(Clone, Copy, Debug, PartialEq, Eq, PartialOrd, Ord, Hash)]
+pub struct ItemId(pub(crate) usize);
 
 /// Contains a set of values and items that can be used together.
 #[derive(Default)]
@@ -54,7 +48,7 @@ impl Model {
 
     /// Add a new value to the model. Id string can not alias other value ids.
     pub fn add_value(&mut self, id_str: impl ToString, value: Value) -> ValueId {
-        let id = ValueId(self.values.len() as u32);
+        let id = ValueId(self.values.len());
 
         let id_str = id_str.to_string();
         assert!(self.value_ids.get(&id_str).is_none());
@@ -66,7 +60,7 @@ impl Model {
 
     /// Add a new inventory type.
     pub fn add_inventory(&mut self, id_str: impl ToString, inventory: Inventory) -> InventoryId {
-        let id = InventoryId(self.inventories.len() as u32);
+        let id = InventoryId(self.inventories.len());
 
         let id_str = id_str.to_string();
         assert!(self.inventory_ids.get(&id_str).is_none());
@@ -78,7 +72,7 @@ impl Model {
 
     /// Add a new item to the model. Id string can not alias other item ids.
     pub fn add_item(&mut self, id_str: impl ToString, item: Item) -> ItemId {
-        let id = ItemId(self.items.len() as u32);
+        let id = ItemId(self.items.len());
 
         let id_str = id_str.to_string();
         assert!(self.item_ids.get(&id_str).is_none());
@@ -137,36 +131,36 @@ impl Model {
     }
 
     pub(crate) fn value(&self, id: ValueId) -> &Value {
-        &self.values[id.idx()]
+        &self.values[id.0]
     }
 
     pub(crate) fn value_mut(&mut self, id: ValueId) -> &mut Value {
-        &mut self.values[id.idx()]
+        &mut self.values[id.0]
     }
 
     pub(crate) fn values(&self) -> impl Iterator<Item = (ValueId, &Value)> {
         self.values
             .iter()
             .enumerate()
-            .map(|(id, val)| (ValueId(id as u32), val))
+            .map(|(id, val)| (ValueId(id), val))
     }
 
     pub(crate) fn inventory(&self, id: InventoryId) -> &Inventory {
-        &self.inventories[id.idx()]
+        &self.inventories[id.0]
     }
 
     pub(crate) fn item(&self, id: ItemId) -> &Item {
-        &self.items[id.idx()]
+        &self.items[id.0]
     }
 
     pub(crate) fn item_mut(&mut self, id: ItemId) -> &mut Item {
-        &mut self.items[id.idx()]
+        &mut self.items[id.0]
     }
 
     pub(crate) fn items(&self) -> impl Iterator<Item = (ItemId, &Item)> {
         self.items
             .iter()
             .enumerate()
-            .map(|(id, val)| (ItemId(id as u32), val))
+            .map(|(id, val)| (ItemId(id), val))
     }
 }
