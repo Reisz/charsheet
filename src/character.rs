@@ -1,6 +1,10 @@
+mod character_inventory;
 mod character_item;
+mod character_value;
 
+use self::character_inventory::*;
 use self::character_item::*;
+use self::character_value::*;
 
 use crate::model::{
     Calculation, Inventory, InventoryId, InventoryInfo, ItemId, Model, Modification, ValueId,
@@ -11,33 +15,6 @@ use std::{
     convert::{TryFrom, TryInto},
 };
 
-struct CharacterValue {
-    base: i32,
-    actual: i32,
-}
-
-impl CharacterValue {
-    fn new(base: i32) -> Self {
-        Self { base, actual: base }
-    }
-}
-
-struct CharacterInventory {
-    inventory: InventoryId,
-    content: Vec<(ItemId, CharacterItem)>,
-    fill: u32,
-}
-
-impl CharacterInventory {
-    fn new(inventory: InventoryId) -> Self {
-        Self {
-            inventory,
-            content: Vec::new(),
-            fill: 0,
-        }
-    }
-}
-
 /// Points to the inventory of an item.
 #[derive(Clone, Copy, Debug, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub struct ItemInventory(usize);
@@ -45,9 +22,9 @@ pub struct ItemInventory(usize);
 /// Contains actual values and equipped items.
 pub struct Character<'a> {
     model: &'a Model,
-    values: Vec<CharacterValue>,
     inventories: Vec<CharacterInventory>,
     items: Vec<CharacterItem>,
+    values: Vec<CharacterValue>,
 }
 
 impl Character<'_> {
@@ -103,20 +80,20 @@ impl Character<'_> {
         }
     }
 
-    fn value(&self, id: ValueId) -> &CharacterValue {
-        &self.values[id.0]
-    }
-
-    fn value_mut(&mut self, id: ValueId) -> &mut CharacterValue {
-        &mut self.values[id.0]
-    }
-
     fn item(&self, id: ItemId) -> &CharacterItem {
         &self.items[id.0]
     }
 
     fn item_mut(&mut self, id: ItemId) -> &mut CharacterItem {
         &mut self.items[id.0]
+    }
+
+    fn value(&self, id: ValueId) -> &CharacterValue {
+        &self.values[id.0]
+    }
+
+    fn value_mut(&mut self, id: ValueId) -> &mut CharacterValue {
+        &mut self.values[id.0]
     }
 
     fn eval(&self, calc: &Calculation) -> i32 {
@@ -150,8 +127,7 @@ impl Character<'_> {
         // Get item info & check size against current fill
         let InventoryInfo { size, stack_size } =
             self.model.item(item).inventory_info.as_ref().unwrap();
-        let Inventory { capacity, slots } =
-            &self.model.inventory(self.inventories[inventory].inventory);
+        let Inventory { capacity, slots } = &self.model.inventory(self.inventories[inventory].id());
 
         // Limit to_put to available space & calculate remainder
         let (mut to_put, remainder) = if let Some(capacity) = capacity {
