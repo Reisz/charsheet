@@ -89,7 +89,9 @@ impl Model {
     }
 
     /// Value of `from` will be added to `to` with the given factor.
-    pub fn add_dependency(&mut self, id: ValueId, calc: Calculation) {
+    pub fn add_dependency(&mut self, id: ValueId, calc: impl IntoCalculation) {
+        let calc = calc.into_calc();
+
         // TODO: prevent cycles
         for dependency in calc.values() {
             self.value_mut(dependency).dependents.push(id);

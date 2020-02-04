@@ -1,4 +1,4 @@
-use super::{Calculation, FrontEnd, ValueId};
+use super::{Calculation, FrontEnd, IntoCalculation, ValueId};
 use std::{collections::HashMap, num::NonZeroU16};
 
 /// Represents all the ways a Value can be modified by an Item.
@@ -41,12 +41,12 @@ impl Item {
     }
 
     /// Create a new item, which automatically applies itself based on the given condition.
-    pub fn with_condition(front_end: FrontEnd, condition: Calculation) -> Self {
+    pub fn with_condition(front_end: FrontEnd, condition: impl IntoCalculation) -> Self {
         Self {
             front_end,
             inventory_info: None,
 
-            condition: Some(condition),
+            condition: Some(condition.into_calc()),
             modifications: HashMap::new(),
         }
     }
