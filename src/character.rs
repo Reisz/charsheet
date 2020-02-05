@@ -6,14 +6,9 @@ use self::character_inventory::*;
 use self::character_item::*;
 use self::character_value::*;
 
-use crate::model::{
-    Calculation, Inventory, InventoryId, InventoryInfo, ItemId, Model, Modification, ValueId,
-};
+use crate::model::{Calculation, Inventory, InventoryId, ItemId, Model, Modification, ValueId};
 use std::collections::HashSet;
-use std::{
-    cmp::min,
-    convert::{TryFrom, TryInto},
-};
+use std::convert::TryFrom;
 
 /// Points to the inventory of an item.
 #[derive(Clone, Copy, Debug, PartialEq, Eq, PartialOrd, Ord, Hash)]
@@ -119,65 +114,19 @@ impl Character<'_> {
     }
 
     /// Store an item into an inventory. Returns the amount that could not fit.
-    pub fn store(&mut self, inventory: Option<InventoryId>, item: ItemId, to_put: u16) -> u16 {
-        assert!(self.model.item(item).has_inventory.is_none());
-
+    pub fn store(&mut self, inventory: Option<InventoryId>, item: ItemId, amount: u16) -> u16 {
         let inventory = inventory.unwrap_or(InventoryId(0)).0;
 
-        // Get item info & check size against current fill
-        let InventoryInfo { size, stack_size } =
-            self.model.item(item).inventory_info.as_ref().unwrap();
         let Inventory { capacity, slots } = &self.model.inventory(self.inventories[inventory].id());
 
-        // Limit to_put to available space & calculate remainder
-        let (mut to_put, remainder) = if let Some(capacity) = capacity {
-            let space =
-                u32::try_from(self.eval(capacity)).unwrap() - self.inventories[inventory].fill;
-            let usage = min(space.try_into().unwrap_or(std::u16::MAX) / *size, to_put);
-
-            (usage, to_put - usage)
-        } else {
-            (to_put, 0)
-        };
-
-        let fill = to_put;
-
-        // Fill up exisitng stacks
-        for (id, existing) in &mut self.inventories[inventory].content {
-            if *id == item {
-                let space = u16::from(*stack_size) - existing.count();
-                let usage = min(space, to_put);
-
-                *existing.count_mut() += usage;
-                to_put -= usage;
-            }
-        }
-
-        // Calulcate exact amount of available slots
+        let capacity = capacity
+            .as_ref()
+            .map(|capacity| u32::try_from(self.eval(capacity)).unwrap());
         let slots = slots
             .as_ref()
-            .map(|slots| self.eval(slots).try_into().unwrap());
-
-        // Create new stacks for remaining items.
-        let inventory = &mut self.inventories[inventory];
-        while to_put > 0 {
-            if slots.map_or(false, |slots| inventory.content.len() == slots) {
-                break;
-            }
-
-            let usage = min((*stack_size).into(), to_put);
-
-            inventory
-                .content
-                .push((item, CharacterItem::with_count(usage)));
-            to_put -= usage;
-        }
-
-        // update current fill
-        inventory.fill += u32::from(fill - to_put) * u32::from(*size);
-
-        // return remaining items
-        to_put + remainder
+            .map(|slots| usize::try_from(self.eval(slots)).unwrap());
+        let info = self.model.item(item).inventory_info.as_ref().unwrap();
+        self.inventories[inventory].put(item, info, amount, capacity, slots)
     }
 
     /// Add an item to the character.
