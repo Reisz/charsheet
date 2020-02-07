@@ -11,7 +11,7 @@ pub enum Modification {
     Change(i32),
 }
 
-pub(crate) struct InventoryInfo {
+pub(crate) struct Physical {
     pub(crate) size: u16,
     pub(crate) stack_size: NonZeroU16,
 }
@@ -23,7 +23,7 @@ pub struct Item {
     /// Front end data
     pub front_end: Option<FrontEnd>,
 
-    pub(crate) inventory_info: Option<InventoryInfo>,
+    pub(crate) physical: Option<Physical>,
     pub(crate) has_inventory: Option<InventoryId>,
 
     pub(crate) condition: Option<Calculation>,
@@ -49,9 +49,9 @@ impl Item {
     }
 
     /// Declare this to be a physical item that can be put into inventories.
-    pub fn allow_in_inventory(mut self, size: u16, stack_size: u16) -> Self {
+    pub fn set_physical(mut self, size: u16, stack_size: u16) -> Self {
         let stack_size = NonZeroU16::new(stack_size).unwrap();
-        self.inventory_info = Some(InventoryInfo { size, stack_size });
+        self.physical = Some(Physical { size, stack_size });
         self
     }
 

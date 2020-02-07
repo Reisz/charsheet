@@ -125,8 +125,8 @@ impl Character<'_> {
         let slots = slots
             .as_ref()
             .map(|slots| usize::try_from(self.eval(slots)).unwrap());
-        let info = self.model.item(item).inventory_info.as_ref().unwrap();
-        self.inventories[inventory].put(item, info, amount, capacity, slots)
+        let physical = self.model.item(item).physical.as_ref().unwrap();
+        self.inventories[inventory].put(item, physical, amount, capacity, slots)
     }
 
     /// Add an item to the character.
