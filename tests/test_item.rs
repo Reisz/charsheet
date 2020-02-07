@@ -1,12 +1,12 @@
-use charsheet::model::{Calculation, FrontEnd, Item, Model, Modification, Value};
+use charsheet::model::{Calculation, Item, Model, Modification, Value};
 use charsheet::Character;
 
 #[test]
 fn simple_modification() {
     let mut model = Model::new();
 
-    let armor = model.add_value("armor", Value::new(FrontEnd::new("Armor"), 0));
-    let chestplate = model.add_item("chestplate", Item::new(FrontEnd::new("Chestplate")));
+    let armor = model.add_value("armor", Value::new(0));
+    let chestplate = model.add_item("chestplate", Item::new());
     model.add_modification(chestplate, armor, Modification::Add(10));
 
     let mut character = Character::new(&model);
@@ -19,17 +19,13 @@ fn simple_modification() {
 #[test]
 fn conditional_item() {
     let mut model = Model::new();
-    let initiative = model.add_value("initiative", Value::new(FrontEnd::new("Initiative"), 0));
-    let burden = model.add_value("burden", Value::new(FrontEnd::new("Carrying"), 0));
-    let max_burden = model.add_value(
-        "max_burden",
-        Value::new(FrontEnd::new("Carrying capacity"), 20),
-    );
+    let initiative = model.add_value("initiative", Value::new(0));
+    let burden = model.add_value("burden", Value::new(0));
+    let max_burden = model.add_value("max_burden", Value::new(20));
 
     let overburdened = model.add_item(
         "overburdened",
-        Item::new(FrontEnd::new("Overburdened"))
-            .set_condition(Calculation::gt(burden.into(), max_burden)),
+        Item::new().set_condition(Calculation::gt(burden.into(), max_burden)),
     );
     model.add_modification(overburdened, initiative, Modification::Add(-2));
 

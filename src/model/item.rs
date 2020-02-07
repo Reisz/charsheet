@@ -18,9 +18,10 @@ pub(crate) struct InventoryInfo {
 
 /// "Equippable" item. Can be used to represent actual items, learnable skills, traits or other
 /// conditionals.
+#[derive(Default)]
 pub struct Item {
     /// Front end data
-    pub front_end: FrontEnd,
+    pub front_end: Option<FrontEnd>,
 
     pub(crate) inventory_info: Option<InventoryInfo>,
     pub(crate) has_inventory: Option<InventoryId>,
@@ -31,15 +32,14 @@ pub struct Item {
 
 impl Item {
     /// Create a new item.
-    pub fn new(front_end: FrontEnd) -> Self {
-        Self {
-            front_end,
-            inventory_info: None,
-            has_inventory: None,
+    pub fn new() -> Self {
+        Self::default()
+    }
 
-            condition: None,
-            modifications: HashMap::new(),
-        }
+    /// Allow this item to be front-end visible.
+    pub fn frontend(mut self, front_end: FrontEnd) -> Self {
+        self.front_end = Some(front_end);
+        self
     }
 
     /// The item will be automatically applied based on the given condition.
