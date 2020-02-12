@@ -7,7 +7,11 @@ fn simple_modification() {
 
     let armor = model.add_value("armor", Value::new(0));
     let chestplate = model.add_item("chestplate", Item::new());
-    model.add_modification(chestplate, armor, Modification::Add(10));
+    model.add_modification(
+        chestplate,
+        armor,
+        Modification::new(0, Calculation::placeholder() + 10),
+    );
 
     let mut character = Character::new(&model);
 
@@ -27,7 +31,11 @@ fn conditional_item() {
         "overburdened",
         Item::new().set_condition(Calculation::gt(burden.into(), max_burden)),
     );
-    model.add_modification(overburdened, initiative, Modification::Add(-2));
+    model.add_modification(
+        overburdened,
+        initiative,
+        Modification::new(0, Calculation::placeholder() - 2),
+    );
 
     let mut character = Character::new(&model);
 

@@ -6,7 +6,7 @@ use self::character_inventory::*;
 use self::character_item::*;
 use self::character_value::*;
 
-use crate::model::{Calculation, Inventory, InventoryId, ItemId, Model, Modification, ValueId};
+use crate::model::{Calculation, Inventory, InventoryId, ItemId, Model, ValueId};
 use std::collections::HashSet;
 use std::convert::TryFrom;
 
@@ -138,11 +138,15 @@ impl Character<'_> {
         }
     }
 
+    fn eval_calc(&self, calc: &Calculation) -> i32 {
+        calc.get(&calc.values().map(|id| self.get(id)).collect::<Vec<_>>())
+    }
+
     fn apply_dependencies(&mut self, id: ValueId) {
         let mut actual = self.value(id).base;
 
         for calc in &self.model.value(id).dependencies {
-            actual += calc.get(&calc.values().map(|id| self.get(id)).collect::<Vec<_>>());
+            actual += self.eval_calc(calc);
         }
 
         self.value_mut(id).actual = actual;
@@ -165,7 +169,7 @@ impl Character<'_> {
     }
 
     fn apply_modifications(&mut self, id: ValueId) {
-        let mods: Vec<_> = self
+        let mut mods: Vec<_> = self
             .model
             .value(id)
             .modifying_items
@@ -181,19 +185,17 @@ impl Character<'_> {
             })
             .collect();
 
-        // TODO: determine sorting
+        // Sort by priority
+        mods.sort_unstable_by(|(_, a), (_, b)| a.priority().cmp(&b.priority()));
 
-        let mut value = self.get(id);
         for modification in mods {
             let (count, modification) = modification;
 
-            value = match modification {
-                Modification::Add(summand) => value + (summand * count as i32),
-                Modification::Multiply(factor) => (value as f32 * factor.powf(count.into())) as i32,
-                Modification::Change(value) => *value,
-            };
+            let calc = modification.calculation();
+            for _ in 0..count {
+                self.value_mut(id).actual = self.eval_calc(calc);
+            }
         }
-        self.value_mut(id).actual = value;
     }
 
     fn update_condition(&mut self, id: ItemId) {

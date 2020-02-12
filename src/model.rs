@@ -4,12 +4,14 @@ mod calculation;
 mod front_end;
 mod inventory;
 mod item;
+mod modification;
 mod value;
 
 pub use calculation::*;
 pub use front_end::*;
 pub use inventory::*;
 pub use item::*;
+pub use modification::*;
 pub use value::*;
 
 use std::collections::HashMap;
@@ -111,8 +113,9 @@ impl Model {
     }
 
     /// When item `from` is equipped, `to` will be modified accordingly.
-    pub fn add_modification(&mut self, from: ItemId, to: ValueId, modification: Modification) {
+    pub fn add_modification(&mut self, from: ItemId, to: ValueId, mut modification: Modification) {
         // TODO: prevent cycles
+        modification.set_value(to);
         self.item_mut(from).modifications.insert(to, modification);
         self.value_mut(to).modifying_items.push(from);
     }

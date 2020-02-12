@@ -1,15 +1,5 @@
-use super::{Calculation, FrontEnd, IntoCalculation, InventoryId, ValueId};
+use super::{Calculation, FrontEnd, IntoCalculation, InventoryId, Modification, ValueId};
 use std::{collections::HashMap, num::NonZeroU16};
-
-/// Represents all the ways a Value can be modified by an Item.
-pub enum Modification {
-    /// Add to or subtract from a value
-    Add(i32),
-    /// Multiply a value
-    Multiply(f32),
-    /// Change to a predefined value
-    Change(i32),
-}
 
 pub(crate) struct Physical {
     pub(crate) size: u16,
