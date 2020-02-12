@@ -5,6 +5,7 @@ use std::{
 };
 
 /// Rounding procedure after division or float-multiplication.
+#[derive(PartialEq)]
 pub enum Rounding {
     /// Round to the next integer that is smaller than the result.
     Floor,
@@ -25,6 +26,7 @@ impl Rounding {
     }
 }
 
+#[derive(PartialEq)]
 enum BinaryOp {
     Add,
     Sub,
@@ -67,6 +69,7 @@ impl BinaryOp {
     }
 }
 
+#[derive(PartialEq)]
 enum UnaryOp {
     Abs,
     Neg,
@@ -83,6 +86,7 @@ impl UnaryOp {
     }
 }
 
+#[derive(PartialEq)]
 enum Element {
     Const(i32),
     Value(usize),
@@ -90,6 +94,8 @@ enum Element {
 
     Unary(UnaryOp, usize),
     Binary(BinaryOp, usize, usize),
+
+    Placeholder,
 }
 
 /// Represents a calculation based on values of a character.
@@ -113,6 +119,45 @@ impl<T: Into<Calculation>> IntoCalculation for T {
 }
 
 impl Calculation {
+    /// Create a placeholder.
+    ///
+    /// Placeholders can later be replaced with a constant or value. Every placeholder in a
+    /// calculation will be replaced at once.
+    ///
+    /// Trying to evaluate a Calculation with active placeholders will result in a panic.
+    pub fn placeholder() -> Self {
+        Self {
+            storage: vec![Element::Placeholder],
+            values: vec![],
+
+            output: 0,
+        }
+    }
+
+    /// Replace all placeholders with a constant.
+    pub fn replace_with_const(mut self, c: i32) -> Self {
+        for element in &mut self.storage {
+            if *element == Element::Placeholder {
+                *element = Element::Const(c);
+            }
+        }
+
+        self
+    }
+
+    /// Replace all placeholders with a value.
+    pub fn replace_with_value(mut self, id: ValueId) -> Self {
+        let id = self.insert_value(id);
+
+        for element in &mut self.storage {
+            if *element == Element::Placeholder {
+                *element = Element::Value(id);
+            }
+        }
+
+        self
+    }
+
     fn insert(mut self, element: Element) -> Self {
         let idx = self.storage.len();
         self.storage.push(element);
@@ -144,9 +189,12 @@ impl Calculation {
             .extend(other.storage.into_iter().map(|element| match element {
                 Element::Const(c) => Element::Const(c),
                 Element::Value(idx) => Element::Value(values[idx]),
+
                 Element::MultiplyF(r, fac, val) => Element::MultiplyF(r, fac, val + offset),
                 Element::Unary(op, val) => Element::Unary(op, val + offset),
                 Element::Binary(op, a, b) => Element::Binary(op, a + offset, b + offset),
+
+                Element::Placeholder => Element::Placeholder,
             }));
 
         other.output + offset
@@ -247,6 +295,10 @@ impl Calculation {
             Element::MultiplyF(r, fac, val) => r.apply(eval(val) as f64 * (*fac as f64)),
             Element::Unary(op, val) => op.exec(eval(val)),
             Element::Binary(op, a, b) => op.exec(eval(a), eval(b)),
+
+            Element::Placeholder => {
+                panic!("Trying to evaluate calculation with active placeholders.")
+            }
         }
     }
 }
