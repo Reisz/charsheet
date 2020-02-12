@@ -135,18 +135,16 @@ impl Calculation {
     }
 
     /// Replace all placeholders with a constant.
-    pub fn replace_with_const(mut self, c: i32) -> Self {
+    pub fn replace_with_const(&mut self, c: i32) {
         for element in &mut self.storage {
             if *element == Element::Placeholder {
                 *element = Element::Const(c);
             }
         }
-
-        self
     }
 
     /// Replace all placeholders with a value.
-    pub fn replace_with_value(mut self, id: ValueId) -> Self {
+    pub fn replace_with_value(&mut self, id: ValueId) {
         let id = self.insert_value(id);
 
         for element in &mut self.storage {
@@ -154,8 +152,6 @@ impl Calculation {
                 *element = Element::Value(id);
             }
         }
-
-        self
     }
 
     fn insert(mut self, element: Element) -> Self {
