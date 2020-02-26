@@ -3,7 +3,7 @@ use super::{Calculation, FrontEnd, ItemId, ValueId};
 /// A value in the character sheet.
 pub struct Value {
     /// Front end data
-    pub front_end: FrontEnd,
+    pub front_end: Option<FrontEnd>,
 
     pub(crate) default: i32,
 
@@ -15,9 +15,9 @@ pub struct Value {
 
 impl Value {
     /// Create a new value.
-    pub fn new(front_end: FrontEnd, default: i32) -> Self {
+    pub fn new(default: i32) -> Self {
         Self {
-            front_end,
+            front_end: None,
             default,
 
             dependencies: Vec::new(),
@@ -25,5 +25,11 @@ impl Value {
             dependents: Vec::new(),
             conditions: Vec::new(),
         }
+    }
+
+    /// Allow this item to be front-end visible.
+    pub fn frontend(mut self, front_end: FrontEnd) -> Self {
+        self.front_end = Some(front_end);
+        self
     }
 }

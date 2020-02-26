@@ -4,11 +4,34 @@ use std::{
     ops::{Add, Div, Mul, Neg, Not, Rem, Sub},
 };
 
+/// Rounding procedure after division or float-multiplication.
+#[derive(PartialEq)]
+pub enum Rounding {
+    /// Round to the next integer that is smaller than the result.
+    Floor,
+    /// Round to the nearest integer from the result.
+    Nearest,
+    /// Round to the next integer that is larger than the result.
+    Ceil,
+}
+
+impl Rounding {
+    fn apply(&self, val: f64) -> i32 {
+        let val = match self {
+            Self::Floor => val.floor(),
+            Self::Nearest => val.round(),
+            Self::Ceil => val.ceil(),
+        };
+        val as _
+    }
+}
+
+#[derive(PartialEq)]
 enum BinaryOp {
     Add,
     Sub,
     Mul,
-    Div,
+    Div(Rounding),
     Rem,
     Min,
     Max,
@@ -28,10 +51,12 @@ impl BinaryOp {
             Self::Add => a + b,
             Self::Sub => a - b,
             Self::Mul => a * b,
-            Self::Div => a / b,
+            Self::Div(r) => r.apply(a as f64 / b as f64),
             Self::Rem => a % b,
             Self::Min => min(a, b),
             Self::Max => max(a, b),
+
+            // Primitive to integer casts (false = 0, true = 1)
             Self::Eq => (a == b) as i32,
             Self::Ne => (a != b) as i32,
             Self::Gt => (a > b) as i32,
@@ -44,6 +69,7 @@ impl BinaryOp {
     }
 }
 
+#[derive(PartialEq)]
 enum UnaryOp {
     Abs,
     Neg,
@@ -60,13 +86,16 @@ impl UnaryOp {
     }
 }
 
+#[derive(PartialEq)]
 enum Element {
     Const(i32),
     Value(usize),
-    MultiplyF(f32, usize),
+    MultiplyF(Rounding, f32, usize),
 
     Unary(UnaryOp, usize),
     Binary(BinaryOp, usize, usize),
+
+    Placeholder,
 }
 
 /// Represents a calculation based on values of a character.
@@ -90,6 +119,41 @@ impl<T: Into<Calculation>> IntoCalculation for T {
 }
 
 impl Calculation {
+    /// Create a placeholder.
+    ///
+    /// Placeholders can later be replaced with a constant or value. Every placeholder in a
+    /// calculation will be replaced at once.
+    ///
+    /// Trying to evaluate a Calculation with active placeholders will result in a panic.
+    pub fn placeholder() -> Self {
+        Self {
+            storage: vec![Element::Placeholder],
+            values: vec![],
+
+            output: 0,
+        }
+    }
+
+    /// Replace all placeholders with a constant.
+    pub fn replace_with_const(&mut self, c: i32) {
+        for element in &mut self.storage {
+            if *element == Element::Placeholder {
+                *element = Element::Const(c);
+            }
+        }
+    }
+
+    /// Replace all placeholders with a value.
+    pub fn replace_with_value(&mut self, id: ValueId) {
+        let id = self.insert_value(id);
+
+        for element in &mut self.storage {
+            if *element == Element::Placeholder {
+                *element = Element::Value(id);
+            }
+        }
+    }
+
     fn insert(mut self, element: Element) -> Self {
         let idx = self.storage.len();
         self.storage.push(element);
@@ -121,9 +185,12 @@ impl Calculation {
             .extend(other.storage.into_iter().map(|element| match element {
                 Element::Const(c) => Element::Const(c),
                 Element::Value(idx) => Element::Value(values[idx]),
-                Element::MultiplyF(fac, val) => Element::MultiplyF(fac, val + offset),
-                Element::Unary(op, val) => Element::Unary(op, val),
+
+                Element::MultiplyF(r, fac, val) => Element::MultiplyF(r, fac, val + offset),
+                Element::Unary(op, val) => Element::Unary(op, val + offset),
                 Element::Binary(op, a, b) => Element::Binary(op, a + offset, b + offset),
+
+                Element::Placeholder => Element::Placeholder,
             }));
 
         other.output + offset
@@ -146,9 +213,14 @@ impl Calculation {
     }
 
     /// Multiply the calculation with a constant float.
-    pub fn mul_f(self, f: f32) -> Self {
+    pub fn mul_f(self, r: Rounding, f: f32) -> Self {
         let output = self.output;
-        self.insert(Element::MultiplyF(f, output))
+        self.insert(Element::MultiplyF(r, f, output))
+    }
+
+    /// Divide by the result of another calculation. Allows setting rounding behavior.
+    pub fn div(self, r: Rounding, other: impl IntoCalculation) -> Self {
+        self.binary(other.into_calc(), BinaryOp::Div(r))
     }
 
     /// Evaluate to the smaller value between a and b.
@@ -216,9 +288,13 @@ impl Calculation {
             Element::Const(v) => *v,
             Element::Value(idx) => values[*idx],
 
-            Element::MultiplyF(fac, val) => (eval(val) as f32 * fac) as i32,
+            Element::MultiplyF(r, fac, val) => r.apply(eval(val) as f64 * (*fac as f64)),
             Element::Unary(op, val) => op.exec(eval(val)),
             Element::Binary(op, a, b) => op.exec(eval(a), eval(b)),
+
+            Element::Placeholder => {
+                panic!("Trying to evaluate calculation with active placeholders.")
+            }
         }
     }
 }
@@ -286,7 +362,7 @@ macro_rules! binary {
 binary!(Add(add) -> BinaryOp::Add);
 binary!(Sub(sub) -> BinaryOp::Sub);
 binary!(Mul(mul) -> BinaryOp::Mul);
-binary!(Div(div) -> BinaryOp::Div);
+binary!(Div(div) -> BinaryOp::Div(Rounding::Floor));
 binary!(Rem(rem) -> BinaryOp::Rem);
 
 macro_rules! unary {

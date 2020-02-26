@@ -8,10 +8,7 @@ fn simple_item() {
     let inventory = model.add_inventory("main", Inventory::new());
     model.set_main_inventory(inventory);
 
-    let chestplate = model.add_item(
-        "chestplate",
-        Item::new(FrontEnd::new("Chestplate")).allow_in_inventory(10, 1),
-    );
+    let chestplate = model.add_item("chestplate", Item::new().set_physical(10, 1));
 
     let mut character = Character::new(&model);
 
@@ -25,10 +22,7 @@ fn limited_space() {
     let inventory = model.add_inventory("main", Inventory::new().capacity(15));
     model.set_main_inventory(inventory);
 
-    let chestplate = model.add_item(
-        "chestplate",
-        Item::new(FrontEnd::new("Chestplate")).allow_in_inventory(10, 1),
-    );
+    let chestplate = model.add_item("chestplate", Item::new().set_physical(10, 1));
 
     let mut character = Character::new(&model);
 
@@ -42,10 +36,7 @@ fn limited_slots() {
     let inventory = model.add_inventory("main", Inventory::new().slots(1));
     model.set_main_inventory(inventory);
 
-    let chestplate = model.add_item(
-        "chestplate",
-        Item::new(FrontEnd::new("Chestplate")).allow_in_inventory(10, 1),
-    );
+    let chestplate = model.add_item("chestplate", Item::new().set_physical(10, 1));
 
     let mut character = Character::new(&model);
 
@@ -59,14 +50,8 @@ fn limited_slots_space() {
     let inventory = model.add_inventory("main", Inventory::new().slots(2).capacity(15));
     model.set_main_inventory(inventory);
 
-    let chestplate = model.add_item(
-        "chestplate",
-        Item::new(FrontEnd::new("Chestplate")).allow_in_inventory(10, 1),
-    );
-    let paper_sheet = model.add_item(
-        "paper_sheet",
-        Item::new(FrontEnd::new("paper_sheet")).allow_in_inventory(1, 10),
-    );
+    let chestplate = model.add_item("chestplate", Item::new().set_physical(10, 1));
+    let paper_sheet = model.add_item("paper_sheet", Item::new().set_physical(1, 10));
 
     let mut character = Character::new(&model);
 
@@ -82,14 +67,8 @@ fn stacking() {
     let inventory = model.add_inventory("main", Inventory::new().slots(3));
     model.set_main_inventory(inventory);
 
-    let chestplate = model.add_item(
-        "chestplate",
-        Item::new(FrontEnd::new("Chestplate")).allow_in_inventory(10, 1),
-    );
-    let paper_sheet = model.add_item(
-        "paper_sheet",
-        Item::new(FrontEnd::new("paper_sheet")).allow_in_inventory(1, 10),
-    );
+    let chestplate = model.add_item("chestplate", Item::new().set_physical(10, 1));
+    let paper_sheet = model.add_item("paper_sheet", Item::new().set_physical(1, 10));
 
     let mut character = Character::new(&model);
 
