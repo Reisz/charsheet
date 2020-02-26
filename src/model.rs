@@ -1,12 +1,14 @@
 //! Allows defining rules for values and items.
 
 mod calculation;
+mod choice;
 mod front_end;
 mod inventory;
 mod item;
 mod value;
 
 pub use calculation::*;
+pub use choice::*;
 pub use front_end::*;
 pub use inventory::*;
 pub use item::*;
