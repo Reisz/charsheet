@@ -6,7 +6,7 @@ use self::character_inventory::*;
 use self::character_item::*;
 use self::character_value::*;
 
-use crate::model::{Calculation, Inventory, InventoryId, ItemId, Model, ValueId};
+use crate::model::{Calculation, Id, Inventory, Item, Model, Value};
 use std::collections::HashSet;
 use std::convert::TryFrom;
 
@@ -29,6 +29,7 @@ impl Character<'_> {
             model,
             values: model
                 .values()
+                .iter()
                 .map(|(_, v)| CharacterValue::new(v.default))
                 .collect(),
             inventories: model
@@ -38,6 +39,7 @@ impl Character<'_> {
                 .collect(),
             items: model
                 .items()
+                .iter()
                 .map(|(_, item)| CharacterItem::new(item.has_inventory))
                 .collect(),
         };
@@ -47,7 +49,7 @@ impl Character<'_> {
     }
 
     fn update_all_values(&mut self) {
-        let mut todo: Vec<_> = self.model.values().collect();
+        let mut todo: Vec<_> = self.model.values().iter().collect();
         let mut done = HashSet::new();
 
         while let Some((id, value)) = todo.pop() {
@@ -69,25 +71,25 @@ impl Character<'_> {
             if ok {
                 done.insert(id);
                 for dependent in &value.dependents {
-                    todo.push((*dependent, self.model.value(*dependent)));
+                    todo.push((*dependent, self.model.values().get(*dependent)));
                 }
             }
         }
     }
 
-    fn item(&self, id: ItemId) -> &CharacterItem {
+    fn item(&self, id: Id<Item>) -> &CharacterItem {
         &self.items[id.0]
     }
 
-    fn item_mut(&mut self, id: ItemId) -> &mut CharacterItem {
+    fn item_mut(&mut self, id: Id<Item>) -> &mut CharacterItem {
         &mut self.items[id.0]
     }
 
-    fn value(&self, id: ValueId) -> &CharacterValue {
+    fn value(&self, id: Id<Value>) -> &CharacterValue {
         &self.values[id.0]
     }
 
-    fn value_mut(&mut self, id: ValueId) -> &mut CharacterValue {
+    fn value_mut(&mut self, id: Id<Value>) -> &mut CharacterValue {
         &mut self.values[id.0]
     }
 
@@ -96,12 +98,12 @@ impl Character<'_> {
     }
 
     /// Get a value
-    pub fn get(&self, id: ValueId) -> i32 {
+    pub fn get(&self, id: Id<Value>) -> i32 {
         self.value(id).actual
     }
 
     /// Change a base value
-    pub fn set_base(&mut self, id: ValueId, new: i32) {
+    pub fn set_base(&mut self, id: Id<Value>, new: i32) {
         let value = self.value_mut(id);
 
         let old = value.base;
@@ -114,10 +116,13 @@ impl Character<'_> {
     }
 
     /// Store an item into an inventory. Returns the amount that could not fit.
-    pub fn store(&mut self, inventory: Option<InventoryId>, item: ItemId, amount: u16) -> u16 {
-        let inventory = inventory.unwrap_or(InventoryId(0)).0;
+    pub fn store(&mut self, inventory: Option<Id<Inventory>>, item: Id<Item>, amount: u16) -> u16 {
+        let inventory = inventory.unwrap_or(Id::new(0)).0;
 
-        let Inventory { capacity, slots } = &self.model.inventory(self.inventories[inventory].id());
+        let Inventory { capacity, slots } = &self
+            .model
+            .inventories()
+            .get(self.inventories[inventory].id());
 
         let capacity = capacity
             .as_ref()
@@ -125,15 +130,15 @@ impl Character<'_> {
         let slots = slots
             .as_ref()
             .map(|slots| usize::try_from(self.eval(slots)).unwrap());
-        let physical = self.model.item(item).physical.as_ref().unwrap();
+        let physical = self.model.items().get(item).physical.as_ref().unwrap();
         self.inventories[inventory].put(item, physical, amount, capacity, slots)
     }
 
     /// Add an item to the character.
-    pub fn equip(&mut self, id: ItemId) {
+    pub fn equip(&mut self, id: Id<Item>) {
         *self.items[id.0].count_mut() += 1;
 
-        for value in self.model.item(id).modifications.keys() {
+        for value in self.model.items().get(id).modifications.keys() {
             self.update_value(*value);
         }
     }
@@ -142,25 +147,25 @@ impl Character<'_> {
         calc.get(&calc.values().map(|id| self.get(id)).collect::<Vec<_>>())
     }
 
-    fn apply_dependencies(&mut self, id: ValueId) {
+    fn apply_dependencies(&mut self, id: Id<Value>) {
         let mut actual = self.value(id).base;
 
-        for calc in &self.model.value(id).dependencies {
+        for calc in &self.model.values().get(id).dependencies {
             actual += self.eval_calc(calc);
         }
 
         self.value_mut(id).actual = actual;
     }
 
-    fn update_value(&mut self, id: ValueId) {
+    fn update_value(&mut self, id: Id<Value>) {
         self.apply_dependencies(id);
         self.apply_modifications(id);
 
-        for dependent in &self.model.value(id).dependents {
+        for dependent in &self.model.values().get(id).dependents {
             self.update_value(*dependent);
         }
 
-        for condition in &self.model.value(id).conditions {
+        for condition in &self.model.values().get(id).conditions {
             self.update_condition(*condition);
         }
 
@@ -168,17 +173,18 @@ impl Character<'_> {
         // NOTE: group values, only make groups observable
     }
 
-    fn apply_modifications(&mut self, id: ValueId) {
+    fn apply_modifications(&mut self, id: Id<Value>) {
         let mut mods: Vec<_> = self
             .model
-            .value(id)
+            .values()
+            .get(id)
             .modifying_items
             .iter()
             .filter_map(|&item| {
                 let count = self.item(item).count();
 
                 if count > 0 {
-                    Some((count, &self.model.item(item).modifications[&id]))
+                    Some((count, &self.model.items().get(item).modifications[&id]))
                 } else {
                     None
                 }
@@ -198,14 +204,14 @@ impl Character<'_> {
         }
     }
 
-    fn update_condition(&mut self, id: ItemId) {
-        *self.item_mut(id).count_mut() = if let Some(calc) = &self.model.item(id).condition {
+    fn update_condition(&mut self, id: Id<Item>) {
+        *self.item_mut(id).count_mut() = if let Some(calc) = &self.model.items().get(id).condition {
             self.eval(calc) as u16
         } else {
             unreachable!();
         };
 
-        for value in self.model.item(id).modifications.keys() {
+        for value in self.model.items().get(id).modifications.keys() {
             self.update_value(*value);
         }
     }

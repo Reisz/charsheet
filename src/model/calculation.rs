@@ -1,4 +1,4 @@
-use super::ValueId;
+use super::{Id, Value};
 use std::{
     cmp::{max, min},
     ops::{Add, Div, Mul, Neg, Not, Rem, Sub},
@@ -101,7 +101,7 @@ enum Element {
 /// Represents a calculation based on values of a character.
 pub struct Calculation {
     storage: Vec<Element>,
-    values: Vec<ValueId>,
+    values: Vec<Id<Value>>,
 
     output: usize,
 }
@@ -144,7 +144,7 @@ impl Calculation {
     }
 
     /// Replace all placeholders with a value.
-    pub fn replace_with_value(&mut self, id: ValueId) {
+    pub fn replace_with_value(&mut self, id: Id<Value>) {
         let id = self.insert_value(id);
 
         for element in &mut self.storage {
@@ -161,7 +161,7 @@ impl Calculation {
         self
     }
 
-    fn insert_value(&mut self, id: ValueId) -> usize {
+    fn insert_value(&mut self, id: Id<Value>) -> usize {
         self.values
             .iter()
             .position(|&other_id| other_id == id)
@@ -273,7 +273,7 @@ impl Calculation {
         self.binary(other.into_calc(), BinaryOp::Or)
     }
 
-    pub(crate) fn values(&self) -> impl Iterator<Item = ValueId> + '_ {
+    pub(crate) fn values(&self) -> impl Iterator<Item = Id<Value>> + '_ {
         self.values.iter().cloned()
     }
 
@@ -317,23 +317,23 @@ macro_rules! binary {
             }
         }
 
-        impl $trait<ValueId> for Calculation {
+        impl $trait<Id<Value>> for Calculation {
             type Output = Self;
 
-            fn $fn(self, id: ValueId) -> Self {
+            fn $fn(self, id: Id<Value>) -> Self {
                 self.binary(id.into(), $op)
             }
         }
 
-        impl $trait for ValueId {
+        impl $trait for Id<Value> {
             type Output = Calculation;
 
-            fn $fn(self, id: ValueId) -> Calculation {
+            fn $fn(self, id: Id<Value>) -> Calculation {
                 Calculation::from(self).binary(id.into(), $op)
             }
         }
 
-        impl $trait<i32> for ValueId {
+        impl $trait<i32> for Id<Value> {
             type Output = Calculation;
 
             fn $fn(self, c: i32) -> Calculation {
@@ -341,10 +341,10 @@ macro_rules! binary {
             }
         }
 
-        impl $trait<ValueId> for i32 {
+        impl $trait<Id<Value>> for i32 {
             type Output = Calculation;
 
-            fn $fn(self, id: ValueId) -> Calculation {
+            fn $fn(self, id: Id<Value>) -> Calculation {
                 Calculation::from(self).binary(id.into(), $op)
             }
         }
@@ -375,7 +375,7 @@ macro_rules! unary {
             }
         }
 
-        impl $trait for ValueId {
+        impl $trait for Id<Value> {
             type Output = Calculation;
 
             fn $fn(self) -> Calculation {
@@ -388,8 +388,8 @@ macro_rules! unary {
 unary!(Neg(neg) -> UnaryOp::Neg);
 unary!(Not(not) -> UnaryOp::Not);
 
-impl From<ValueId> for Calculation {
-    fn from(id: ValueId) -> Self {
+impl From<Id<Value>> for Calculation {
+    fn from(id: Id<Value>) -> Self {
         Self {
             storage: vec![Element::Value(0)],
             values: vec![id],

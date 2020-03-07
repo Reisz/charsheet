@@ -1,4 +1,4 @@
-use super::{Calculation, FrontEnd, IntoCalculation, InventoryId, Modification, ValueId};
+use super::{Calculation, FrontEnd, Id, IntoCalculation, Inventory, Modification, Value};
 use std::{collections::HashMap, num::NonZeroU16};
 
 pub(crate) struct Physical {
@@ -14,10 +14,10 @@ pub struct Item {
     pub front_end: Option<FrontEnd>,
 
     pub(crate) physical: Option<Physical>,
-    pub(crate) has_inventory: Option<InventoryId>,
+    pub(crate) has_inventory: Option<Id<Inventory>>,
 
     pub(crate) condition: Option<Calculation>,
-    pub(crate) modifications: HashMap<ValueId, Modification>,
+    pub(crate) modifications: HashMap<Id<Value>, Modification>,
 }
 
 impl Item {
@@ -46,7 +46,7 @@ impl Item {
     }
 
     /// Change the invetory type to use with this item.
-    pub fn set_inventory(mut self, id: InventoryId) -> Self {
+    pub fn set_inventory(mut self, id: Id<Inventory>) -> Self {
         self.has_inventory = Some(id);
         self
     }

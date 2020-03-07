@@ -1,15 +1,15 @@
 use super::CharacterItem;
-use crate::model::{InventoryId, ItemId, Physical};
+use crate::model::{Id, Inventory, Item, Physical};
 use std::{cmp::min, convert::TryFrom};
 
 pub struct CharacterInventory {
-    id: InventoryId,
-    pub content: Vec<(ItemId, CharacterItem)>,
+    id: Id<Inventory>,
+    pub content: Vec<(Id<Item>, CharacterItem)>,
     pub fill: u32,
 }
 
 impl CharacterInventory {
-    pub fn new(id: InventoryId) -> Self {
+    pub fn new(id: Id<Inventory>) -> Self {
         Self {
             id,
             content: Vec::new(),
@@ -17,7 +17,7 @@ impl CharacterInventory {
         }
     }
 
-    pub fn id(&self) -> InventoryId {
+    pub fn id(&self) -> Id<Inventory> {
         self.id
     }
 
@@ -32,7 +32,7 @@ impl CharacterInventory {
     }
 
     /// Attempt to fill non-full stacks with àmount` of `item`. Returns number of items left.
-    fn fill_stacks(&mut self, id: ItemId, mut amount: u16, limit: u16) -> u16 {
+    fn fill_stacks(&mut self, id: Id<Item>, mut amount: u16, limit: u16) -> u16 {
         for (slot_id, existing) in &mut self.content {
             if *slot_id == id {
                 let space = limit - existing.count();
@@ -49,7 +49,7 @@ impl CharacterInventory {
     /// Attempt to create new stacks with `amount` of `item`. Returns number of items left.
     fn create_stacks(
         &mut self,
-        id: ItemId,
+        id: Id<Item>,
         mut amount: u16,
         limit: u16,
         slot_count: Option<usize>,
@@ -71,7 +71,7 @@ impl CharacterInventory {
     /// Attempt to put `amount` of `item` into this inventory. Returns number of items that could not fit.
     pub(crate) fn put(
         &mut self,
-        id: ItemId,
+        id: Id<Item>,
         physical: &Physical,
         amount: u16,
         capacity: Option<u32>,

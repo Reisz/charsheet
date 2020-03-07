@@ -1,4 +1,4 @@
-use super::{Calculation, ValueId};
+use super::{Calculation, Id, Value};
 
 /// Represents a modification.
 pub struct Modification {
@@ -15,7 +15,7 @@ impl Modification {
         }
     }
 
-    pub(crate) fn set_value(&mut self, id: ValueId) {
+    pub(crate) fn set_value(&mut self, id: Id<Value>) {
         self.calculation.replace_with_value(id);
     }
 

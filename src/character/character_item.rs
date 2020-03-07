@@ -1,6 +1,6 @@
 use super::ItemInventory;
 // use std::convert::TryFrom;
-use crate::model::InventoryId;
+use crate::model::{Id, Inventory};
 
 pub struct CharacterItem {
     inventories: Option<Vec<ItemInventory>>,
@@ -8,7 +8,7 @@ pub struct CharacterItem {
 }
 
 impl CharacterItem {
-    pub fn new(has_inventory: Option<InventoryId>) -> Self {
+    pub fn new(has_inventory: Option<Id<Inventory>>) -> Self {
         Self {
             inventories: has_inventory.map(|_| Vec::new()),
             count: 0,
