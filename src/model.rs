@@ -77,6 +77,13 @@ impl Model {
 
     /// Add a selection to a choice.
     pub fn add_selection(&mut self, id: Id<Choice>, selection: Selection) {
+        for &value in selection.modifications.keys() {
+            let list = &mut self.values.get_mut(value).modifying_choices;
+            if list.iter().all(|&e| e != id) {
+                list.push(id);
+            }
+        }
+
         self.choices.get_mut(id).options.push(selection);
     }
 

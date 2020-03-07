@@ -6,7 +6,7 @@ use self::character_inventory::*;
 use self::character_item::*;
 use self::character_value::*;
 
-use crate::model::{Calculation, Id, Inventory, Item, Model, Value};
+use crate::model::{Calculation, Choice, Id, Inventory, Item, Model, Value};
 use std::collections::HashSet;
 use std::convert::TryFrom;
 
@@ -17,6 +17,7 @@ pub struct ItemInventory(usize);
 /// Contains actual values and equipped items.
 pub struct Character<'a> {
     model: &'a Model,
+    choices: Vec<u16>,
     inventories: Vec<CharacterInventory>,
     items: Vec<CharacterItem>,
     values: Vec<CharacterValue>,
@@ -27,6 +28,7 @@ impl Character<'_> {
     pub fn new(model: &'_ Model) -> Character<'_> {
         let mut result = Character {
             model,
+            choices: model.choices().iter().map(|_| 0).collect(),
             values: model
                 .values()
                 .iter()
@@ -54,6 +56,7 @@ impl Character<'_> {
 
         while let Some((id, value)) = todo.pop() {
             let ok = if value.dependencies.is_empty() {
+                self.apply_modifications(id);
                 true
             } else if value
                 .dependencies
@@ -63,6 +66,7 @@ impl Character<'_> {
                 .all(|dep| done.contains(&dep))
             {
                 self.apply_dependencies(id);
+                self.apply_modifications(id);
                 true
             } else {
                 false
@@ -75,6 +79,10 @@ impl Character<'_> {
                 }
             }
         }
+    }
+
+    fn choice(&self, id: Id<Choice>) -> u16 {
+        self.choices[id.0]
     }
 
     fn item(&self, id: Id<Item>) -> &CharacterItem {
@@ -117,7 +125,7 @@ impl Character<'_> {
 
     /// Store an item into an inventory. Returns the amount that could not fit.
     pub fn store(&mut self, inventory: Option<Id<Inventory>>, item: Id<Item>, amount: u16) -> u16 {
-        let inventory = inventory.unwrap_or(Id::new(0)).0;
+        let inventory = inventory.unwrap_or_else(|| Id::new(0)).0;
 
         let Inventory { capacity, slots } = &self
             .model
@@ -189,6 +197,19 @@ impl Character<'_> {
                     None
                 }
             })
+            .chain(
+                self.model
+                    .values()
+                    .get(id)
+                    .modifying_choices
+                    .iter()
+                    .filter_map(|&choice| {
+                        self.model.choices().get(choice).options[self.choice(choice) as usize]
+                            .modifications
+                            .get(&id)
+                            .map(|m| (1, m))
+                    }),
+            )
             .collect();
 
         // Sort by priority

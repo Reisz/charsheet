@@ -1,4 +1,4 @@
-use super::{Calculation, FrontEnd, Id, Item};
+use super::{Calculation, Choice, FrontEnd, Id, Item};
 
 /// A value in the character sheet.
 pub struct Value {
@@ -9,6 +9,7 @@ pub struct Value {
 
     pub(crate) dependencies: Vec<Calculation>,
     pub(crate) modifying_items: Vec<Id<Item>>,
+    pub(crate) modifying_choices: Vec<Id<Choice>>,
     pub(crate) dependents: Vec<Id<Value>>,
     pub(crate) conditions: Vec<Id<Item>>,
 }
@@ -22,6 +23,7 @@ impl Value {
 
             dependencies: Vec::new(),
             modifying_items: Vec::new(),
+            modifying_choices: Vec::new(),
             dependents: Vec::new(),
             conditions: Vec::new(),
         }

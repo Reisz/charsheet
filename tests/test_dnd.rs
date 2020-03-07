@@ -47,6 +47,9 @@ fn test_ability_modifiers() {
     let model = dnd_model();
 
     let mut character = Character::new(&model);
+    // Character is dwarf
+    assert_eq!(character.get(model.values().id("constitution")), 12);
+
     character.set_base(model.values().id("strength"), 1);
     character.set_base(model.values().id("dexterity"), 30);
     character.set_base(model.values().id("constitution"), 10);
@@ -54,6 +57,6 @@ fn test_ability_modifiers() {
 
     assert_eq!(character.get(model.values().id("strength_mod")), -5);
     assert_eq!(character.get(model.values().id("dexterity_mod")), 10);
-    assert_eq!(character.get(model.values().id("constitution_mod")), 0);
+    assert_eq!(character.get(model.values().id("constitution_mod")), 1);
     assert_eq!(character.get(model.values().id("intelligence_mod")), 0);
 }

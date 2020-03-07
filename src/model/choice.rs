@@ -19,7 +19,12 @@ impl Selection {
     pub fn new(mods: impl Iterator<Item = (Id<Value>, Modification)>) -> Self {
         Self {
             front_end: None,
-            modifications: mods.collect(),
+            modifications: mods
+                .map(|(id, mut modification)| {
+                    modification.set_value(id);
+                    (id, modification)
+                })
+                .collect(),
         }
     }
 
