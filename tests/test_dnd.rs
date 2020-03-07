@@ -1,4 +1,4 @@
-use charsheet::model::{Model, Value};
+use charsheet::model::{Calculation, Choice, Model, Modification, Selection, Value};
 use charsheet::Character;
 
 fn dnd_model() -> Model {
@@ -21,6 +21,21 @@ fn dnd_model() -> Model {
         // Formula for modifier, derived from table (division rounds towards zero)
         model.add_dependency(modifier, (value / 2) - 5);
     }
+
+    // Races
+    let race = model.add_choice("race", Choice::new());
+
+    // Dwarf
+    model.add_selection(
+        race,
+        Selection::new(
+            vec![(
+                model.value_id("constitution"),
+                Modification::new(0, Calculation::placeholder() + 2),
+            )]
+            .into_iter(),
+        ),
+    );
 
     // TODO extend
 
